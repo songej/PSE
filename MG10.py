@@ -1,15 +1,20 @@
 import random
 import streamlit as st
 
+st.set_page_config(layout="centered", page_title="PSE Gamma StudyMate", page_icon="🎓")  # 중앙 정렬로 화면 구성
+
 st.title('PSE Gamma StudyMate')
 
 # 기본 그룹 멤버
 all_members = ['Angela', 'Kate', 'Lily', 'Noel', 'Rae', 'Rain']
 
 # 팀 멤버 선택 체크박스 (기본값: 모두 체크)
-present_members = [member for member in all_members if st.checkbox(f"{member}", value=True)]
+st.write("Select the present members:")
+with st.expander("Select Members", expanded=True):  # 모바일에서 내용을 접을 수 있도록 함
+    present_members = [member for member in all_members if st.checkbox(f"{member}", value=True)]
 
-# 단어시험 출제자 및 팀 랜덤 배정 함수
+# 캐시를 활용해 단어시험 출제자 및 팀 랜덤 배정 처리
+@st.cache_data(show_spinner=False)
 def assign_roles(members):
     if not members or len(members) < 2:
         return None, None, "Not enough members to form a team!"
@@ -36,13 +41,23 @@ def assign_roles(members):
 # Mix It Up! 버튼 기능
 if st.button('Mix It Up!'):
     if not present_members:
-        st.write("No members selected! Please select at least 2 members.")
+        st.error("No members selected! Please select at least 2 members.")
     else:
-        word_tester, teams, error = assign_roles(present_members)
+        with st.spinner("Shuffling teams and selecting a word tester..."):  # 로딩 애니메이션 추가
+            word_tester, teams, error = assign_roles(present_members)
         if error:
-            st.write(error)
+            st.error(error)
         else:
-            st.write(f"Word Tester: {word_tester}")
+            st.success(f"Word Tester: {word_tester}")
             for i, team in enumerate(teams, start=1):
                 st.write(f"Gamma G1-{i}: {', '.join(team)}")
 
+# 푸터 메시지 (웹 배포 시 유용)
+st.markdown("""
+    <style>
+    footer {visibility: hidden;}
+    </style>
+    <div style='text-align: center; font-size: small;'>
+    <p>Developed for PSE Study | Gamma Group #1 Rae</p>
+    </div>
+    """, unsafe_allow_html=True)
