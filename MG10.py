@@ -13,8 +13,7 @@ st.write("Select the present members:")
 with st.expander("Select Members", expanded=True):  # 모바일에서 내용을 접을 수 있도록 함
     present_members = [member for member in all_members if st.checkbox(f"{member}", value=True)]
 
-# 캐시를 활용해 단어시험 출제자 및 팀 랜덤 배정 처리
-@st.cache_data(show_spinner=False)
+# 단어시험 출제자 및 팀 랜덤 배정 함수
 def assign_roles(members):
     if not members or len(members) < 2:
         return None, None, "Not enough members to form a team!"
@@ -51,13 +50,3 @@ if st.button('Mix It Up!'):
             st.success(f"Word Tester: {word_tester}")
             for i, team in enumerate(teams, start=1):
                 st.write(f"Gamma G1-{i}: {', '.join(team)}")
-
-# 푸터 메시지 (웹 배포 시 유용)
-st.markdown("""
-    <style>
-    footer {visibility: hidden;}
-    </style>
-    <div style='text-align: center; font-size: small;'>
-    <p>Developed for PSE Study | Gamma Group #1 Rae</p>
-    </div>
-    """, unsafe_allow_html=True)
