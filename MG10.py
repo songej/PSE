@@ -7,11 +7,11 @@ st.title('PSE Gamma Shuffler')
 all_members = ['Angela', 'Kate', 'Lily', 'Noel', 'Rae', 'Rain']
 
 # 팀 멤버 선택 체크박스 (기본값: 모두 체크)
-st.write("Select team members (uncheck absent members):")
-present_members = []
-for member in all_members:
-    if st.checkbox(f"{member}", value=True, key=member):
-        present_members.append(member)
+with st.expander("Select team members (uncheck absent members):"):
+    present_members = []
+    for member in all_members:
+        if st.checkbox(f"{member}", value=True, key=member):
+            present_members.append(member)
 
 # 팀 이름을 동적으로 생성하는 함수
 def generate_teams(num_teams):
