@@ -1,17 +1,17 @@
 import random
 import streamlit as st
 
-st.set_page_config(layout="centered", page_title="PSE Gamma StudyMate", page_icon="🎓")
+# 페이지 설정 (모바일 레이아웃을 고려하여 wide로 설정)
+st.set_page_config(layout="wide", page_title="PSE Gamma StudyMate", page_icon="🎓")
 
 st.title('PSE Gamma StudyMate')
 
 # 기본 그룹 멤버
 all_members = ['Angela', 'Kate', 'Lily', 'Noel', 'Rae', 'Rain']
 
-# 팀 멤버 선택 체크박스 (기본값: 모두 체크)
+# 팀 멤버 선택 체크박스 -> 모바일에서 리스트가 길어질 수 있으므로 multiselect로 변경
 st.write("Select the present members:")
-with st.expander("Select Members", expanded=True):
-    present_members = [member for member in all_members if st.checkbox(member, value=True)]
+present_members = st.multiselect("Select Members", all_members, default=all_members)
 
 # 단어시험 출제자 및 팀 랜덤 배정 함수
 def assign_roles(members):
@@ -19,14 +19,12 @@ def assign_roles(members):
         return None, [], "Not enough members to form a team!"
     
     random.shuffle(members)
-    word_tester, team_members = members[0], members[1:]
+    word_tester = members[0]  # 첫 번째 멤버를 퀴즈 출제자로 지정
 
-    # 팀 구성
-    teams = [team_members[i:i+2] for i in range(0, len(team_members), 2)]
-    
-    # 첫 팀에 3명 배정(홀수 인원일 때)
-    if len(team_members) % 2 != 0:
-        teams[0].append(team_members[-1])
+    # 팀 구성 (2명씩 묶고, 홀수일 경우 첫 번째 팀에 추가)
+    teams = [members[i:i+2] for i in range(0, len(members), 2)]
+    if len(members) % 2 != 0:
+        teams[0].append(members[-1])
 
     return word_tester, teams, None
 
@@ -43,3 +41,17 @@ if st.button('Mix It Up!'):
             st.success(f"Vocabulary Quizmaster: {word_tester}")
             for i, team in enumerate(teams, start=1):
                 st.write(f"Gamma G1-{i}: {', '.join(team)}")
+
+# 사용자 안내 텍스트에 글자 크기를 조절하여 모바일에서 읽기 쉽게 만듦
+st.markdown(
+    """
+    <style>
+    .stButton button {
+        font-size: 18px;
+        padding: 10px;
+    }
+    .stMarkdown p {
+        font-size: 18px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
