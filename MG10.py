@@ -6,17 +6,6 @@ st.set_page_config(layout="wide", page_title="PSE Gamma StudyMate", page_icon="ð
 st.markdown(
     """
     <style>
-    .block-container {
-        padding-top: 1rem;
-    }
-    .stButton button {
-        font-size: 18px;
-        padding: 10px;
-    }
-    .stMarkdown p {
-        font-size: 18px;
-    }
-    
     @media (max-width: 768px) {
         .block-container {
             padding-top: 0.5rem;
