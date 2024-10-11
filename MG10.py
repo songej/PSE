@@ -7,15 +7,12 @@ st.title('PSE Gamma Shuffler')
 all_members = ['Angela', 'Kate', 'Lily', 'Noel', 'Rae', 'Rain']
 teams = ['Gamma G1-1', 'Gamma G1-2', 'Gamma G1-3']
 
-# 결석 인원을 선택할 수 있는 체크박스 인터페이스
-st.write("Select absent members:")
-absent_members = []
+# 팀 멤버 선택 체크박스 (기본값: 모두 체크)
+st.write("Select team members (uncheck absent members):")
+present_members = []
 for member in all_members:
-    if st.checkbox(f"{member}", key=member):
-        absent_members.append(member)
-
-# 결석자를 제외한 현재 조원 명단
-present_members = [member for member in all_members if member not in absent_members]
+    if st.checkbox(f"{member}", value=True, key=member):
+        present_members.append(member)
 
 # 팀을 랜덤하게 배정하는 함수
 def random_teams():
