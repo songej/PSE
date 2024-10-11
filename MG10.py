@@ -8,7 +8,7 @@ st.markdown(
     <style>
     @media (max-width: 768px) {
         .block-container {
-            padding-top: 0.5rem;
+            padding-top: 1rem;
         }
         .stButton button {
             font-size: 16px;
