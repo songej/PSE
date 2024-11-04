@@ -1,7 +1,7 @@
 import random
 import streamlit as st
 
-st.set_page_config(layout="wide", page_title="PSE Gamma StudyMate", page_icon="🎓")
+st.set_page_config(layout="wide", page_title="PSE StudyMate", page_icon="🎓")
 
 st.markdown(
     """
@@ -22,7 +22,7 @@ st.markdown(
     """, unsafe_allow_html=True
 )
 
-st.title('PSE Gamma StudyMate')
+st.title('PSE StudyMate')
 
 all_members = ['Angela', 'Kate', 'Lily', 'Noel', 'Rae', 'Rain']
 
