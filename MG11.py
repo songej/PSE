@@ -53,4 +53,4 @@ if st.button('Mix It Up!'):
         else:
             st.success(f"Vocabulary Quizmaster: {quizmaster}")
             for i, team in enumerate(teams, start=1):
-                st.write(f"Sub-group #{i}: {', '.join(team)}")
+                st.write(f"sub-group #{i}: {', '.join(team)}")
