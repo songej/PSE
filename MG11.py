@@ -26,7 +26,7 @@ st.title('PSE StudyMate')
 
 all_members = ['Angela', 'Kate', 'Lily', 'Noel', 'Rae', 'Rain']
 
-present_members = st.multiselect("Select Members", all_members, default=[])
+present_members = st.multiselect("Select Members", all_members, default=all_members)
 
 def assign_roles(members):
     num_members = len(members)
