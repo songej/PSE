@@ -26,7 +26,7 @@ st.title('PSE StudyMate')
 
 all_members = ['Angela', 'Kate', 'Lily', 'Noel', 'Rae', 'Rain']
 
-present_members = st.multiselect("Select Members", all_members, default=all_members)
+present_members = st.multiselect("Select Members", all_members, default=[])
 
 def assign_roles(members):
     num_members = len(members)
@@ -38,7 +38,8 @@ def assign_roles(members):
     teams = [members[i:i+2] for i in range(0, num_members, 2)]
     
     if len(teams) > 1 and len(teams[-1]) == 1:
-        teams[-2].append(teams.pop()[0])
+        if len(teams[-2]) < 3:
+            teams[-2].append(teams.pop()[0])
     return quizmaster, teams, None
 
 if st.button('Mix It Up!'):
