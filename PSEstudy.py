@@ -24,7 +24,7 @@ st.markdown(
 
 st.title('PSE StudyMate')
 
-all_members = ['1번', '2번', '3번', '4번', '5번', '6번', '7번']
+all_members = ['1번', '2번', '3번', '4번', '5번', '6번']
 
 present_members = st.multiselect("Select Members", all_members, default=all_members)
 
