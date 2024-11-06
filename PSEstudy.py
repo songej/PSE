@@ -24,7 +24,7 @@ st.markdown(
 
 st.title('PSE StudyMate')
 
-all_members = ['1번', '2번', '3번', '4번', '5번', '6번']
+all_members = ['1번', '2번', '3번', '4번', '5번', '6번', '7번']
 
 present_members = st.multiselect("Select Members", all_members, default=all_members)
 
@@ -53,4 +53,4 @@ if st.button('Mix It Up!'):
         else:
             st.success(f"Vocabulary Quizmaster: {quizmaster}")
             for i, team in enumerate(teams, start=1):
-                st.write(f"sub-group #{i}: {', '.join(team)}")
+                st.write(f"sub-group #{i}: [ {', '.join(team)}" ])
