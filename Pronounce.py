@@ -3,7 +3,28 @@ import requests
 import re
 import pandas as pd
 
-st.title("Phonetic Transcription Finder")
+st.set_page_config(layout="wide", page_title="PronFind", page_icon="🎙️")
+
+st.markdown(
+    """
+    <style>
+    @media (max-width: 768px) {
+        .block-container {
+            padding-top: 1rem;
+        }
+        .stButton button {
+            font-size: 16px;
+            padding: 8px;
+        }
+        .stMarkdown p {
+            font-size: 16px;
+        }
+    }
+    </style>
+    """, unsafe_allow_html=True
+)
+
+st.title("PronFind: Phonetic Transcription Finder")
 
 st.markdown("""
 Merriam-Webster Dictionary API 웹사이트에서 무료로 제공하는 API 키를 입력하고,  
