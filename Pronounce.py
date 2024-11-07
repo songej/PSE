@@ -8,12 +8,13 @@ st.title("Phonetic Transcription Finder")
 st.write("Merriam-Webster Dictionary API 웹사이트에서 무료로 제공하는 API 키를 입력하세요.")
 
 st.markdown("""
+Merriam-Webster Dictionary API 웹사이트에서 무료로 제공하는 API 키를 입력하고,
+하루에 1000개까지 한꺼번에 발음기호를 찾아보세요.
 1. [Merriam-Webster's Developer Center](https://dictionaryapi.com/register/index) 회원가입
    - Request API Key (1) 는 Collegiate Dictionary 선택
    - Request API Key (2) 는 Learners Dictionary 선택
 2. 이메일 인증
 3. [Your Keys 페이지](https://dictionaryapi.com/account/my-keys) 에서 Key (Dictionary): 부분의 코드를 복사해서 붙여넣기
-> 하루에 1000건 호출 무료
 """)
 
 # API 키 입력 받기
