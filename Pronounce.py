@@ -14,7 +14,6 @@ API_KEY = 'YOUR_API_KEY'
 API_URL = "https://www.dictionaryapi.com/api/v3/references/collegiate/json/{}?key={}"
 
 # 복수형을 단수형으로 변환하는 규칙 기반 함수
-# 영어의 단순 복수형에서 단수형으로 변환하여 발음기호를 더 정확히 찾도록 보조함
 def get_singular(word):
     if word.endswith('ies') and len(word) > 3:
         return word[:-3] + 'y'  # 예: 'studies' -> 'study'
@@ -35,16 +34,13 @@ def get_phonetic(word):
         data = response.json()
         
         # JSON 데이터 구조 확인 후 발음기호 반환
-        # 'hwi' 키가 존재하고, 그 안에 'prs' 배열이 있으면 발음기호 반환
         if data and isinstance(data, list) and 'hwi' in data[0] and 'prs' in data[0]['hwi']:
             return data[0]['hwi']['prs'][0].get('mw', "N/A")  # 발음기호(mw)가 없으면 "N/A" 반환
         else:
             st.warning(f"'{word}'에 대한 발음기호가 존재하지 않습니다.")  # 발음기호가 없으면 사용자에게 경고
     except requests.exceptions.RequestException as e:
-        # 네트워크 문제나 HTTP 오류 발생 시 에러 메시지 출력
         st.error(f"API 오류 발생: {e}")
     except ValueError:
-        # JSON 변환 중 오류 발생 시 예외 처리
         st.error("JSON 데이터를 파싱하는 중 오류가 발생했습니다.")
     return "N/A"  # 발음기호가 없는 경우 기본값 "N/A" 반환
 
@@ -53,23 +49,20 @@ def process_word(word):
     if not word.strip():  # 공백 또는 빈 문자열인 경우 "N/A" 반환
         return "N/A"
     
-    # 단어를 구분 문자(공백, 하이픈, 슬래시, 점)로 분리하여 각각의 토큰 생성
     tokens = re.split(r'([ \-/.])', word)
     phonetic_tokens = []  # 발음기호 저장 리스트
 
-    # 각 토큰을 반복 처리
     for token in tokens:
         if re.match(r'[ \-/.]', token):  # 구분 문자 그대로 저장
             phonetic_tokens.append(token)
         else:
-            # API에서 발음기호 가져오기
             transcription = get_phonetic(token)
             if transcription == "N/A":  # 발음기호가 없는 경우 단수형 변환 후 다시 시도
                 singular_form = get_singular(token)
-                if singular_form != token:  # 단수형이 원래 단어와 다를 때만 요청
+                if singular_form != token:
                     transcription = get_phonetic(singular_form)
                     if transcription != "N/A":
-                        transcription += f" ({singular_form})"  # 단수형이 찾은 발음기호에 표시
+                        transcription += f" ({singular_form})"
             phonetic_tokens.append(transcription if transcription != "N/A" else "N/A")
 
     return ''.join(phonetic_tokens)  # 최종적으로 모든 토큰 합쳐서 반환
@@ -77,8 +70,8 @@ def process_word(word):
 # API 호출 버튼 - 클릭 시 발음기호 찾기
 if st.button("Get Phonetic Transcriptions"):
     if word_list:  # 단어가 입력된 경우에만 실행
-        # 입력된 단어 목록을 처리하여 발음기호 사전 생성
-        transcriptions = {word: process_word(word) for word in word_list if word.strip()}
+        with st.spinner("발음기호를 가져오는 중입니다..."):  # 스피너 추가
+            transcriptions = {word: process_word(word) for word in word_list if word.strip()}
         
         # 발음기호 결과 출력
         st.write("## Phonetic Transcriptions")
