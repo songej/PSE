@@ -1,9 +1,8 @@
 import streamlit as st
 import requests
 import re
-import pandas as pd  # pandas 임포트 추가
+import pandas as pd
 
-# 프로그램 제목
 st.title("Phonetic Transcription Finder")
 
 st.markdown("""
@@ -16,14 +15,11 @@ Merriam-Webster Dictionary API 웹사이트에서 무료로 제공하는 API 키
 3. [Your Keys 페이지](https://dictionaryapi.com/account/my-keys) 에서 Key (Dictionary): 부분의 코드를 복사해서 붙여넣기
 """)
 
-# API 키 입력 받기
 API_KEY = st.text_input("API Key 입력:", type="password")
 
-# 단어 리스트 입력 받기
 st.write("발음기호를 가져올 단어 목록을 입력하세요. (한 줄에 하나씩)")
 word_list = st.text_area("단어 입력:", height=200).splitlines()
 
-# API URL 설정
 API_URL = "https://www.dictionaryapi.com/api/v3/references/collegiate/json/{}?key={}"
 
 # 복수형을 단수형으로 변환
@@ -37,7 +33,7 @@ def get_singular(word):
         return word[:-1]
     return word
 
-# 발음기호를 API에서 가져오기
+# API에서 발음기호 가져오기
 def get_phonetic(word):
     """API에서 발음기호를 가져오고 오류를 처리합니다."""
     try:
@@ -78,7 +74,7 @@ def process_word(word):
 
     return ''.join(phonetic_tokens)
 
-# 발음기호 찾기 버튼 클릭 시
+# 발음기호 가져오기 실행
 if st.button("Get Phonetic Transcriptions"):
     if not API_KEY:
         st.error("API Key를 입력하세요.")
@@ -88,14 +84,12 @@ if st.button("Get Phonetic Transcriptions"):
         
         df = pd.DataFrame(list(transcriptions.items()), columns=["Word", "Phonetic (with Stress)"])
         df.index += 1
-
-        # [N/A]가 포함된 셀을 노란색 배경으로 스타일링
         def highlight_na(value):
             if '[N/A]' in value:
                 return 'background-color: yellow'
             return ''
-        
         styled_df = df.style.applymap(highlight_na, subset=['Phonetic (with Stress)'])
-        st.dataframe(styled_df)  # 스타일링된 데이터프레임 표시
+        st.dataframe(styled_df)
+
     else:
         st.warning("단어를 최소 하나 입력하세요.")
