@@ -56,22 +56,22 @@ def get_phonetic(word):
 # 단어 처리 후 발음기호 가져오기
 def process_word(word):
     """단어의 발음기호를 규칙에 따라 가져옵니다."""
-    tokens = re.split(r'([ \-/.])', word)
+    # 다양한 구분자 고려: 공백, -, /, ., ,, ;, !, ?, :
+    tokens = re.split(r'([ \-/,;.!?:])', word)
     phonetic_tokens = []
-
     for token in tokens:
-        if re.match(r'[ \-/.]', token):
+        # 구분자라면 그대로 추가
+        if re.match(r'[ \-/,;.!?:]', token):
             phonetic_tokens.append(token)
-        elif token.strip():
+        elif token.strip():  # 공백이 아닌 실제 단어인 경우에만 처리
             transcription = get_phonetic(token)
-            if transcription == "N/A":
+            if transcription == "N/A":  # 발음기호가 없는 경우 단수형 변환 후 다시 시도
                 singular_form = get_singular(token)
                 if singular_form != token:
                     transcription = get_phonetic(singular_form)
                     if transcription != "N/A":
-                        transcription += f" [{singular_form}]"
-            phonetic_tokens.append(transcription if transcription != "N/A" else "[N/A]")
-
+                        transcription += f" [{singular_form}]"  # 단수형을 [ ]로 표시
+            phonetic_tokens.append(transcription if transcription != "N/A" else "[N/A]")  # N/A를 [N/A]로 변경
     return ''.join(phonetic_tokens)
 
 # 발음기호 가져오기 실행
