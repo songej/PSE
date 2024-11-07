@@ -7,7 +7,8 @@ from nltk import download
 # NLTK 다운로드
 try:
     wordnet.ensure_loaded()  # 'wordnet' 모듈을 사용할 수 있는지 확인
-except:
+except LookupError:
+    st.warning("NLTK WordNet 데이터를 다운로드하는 중입니다. 잠시만 기다려 주세요...")
     download('wordnet')  # 필요 시 'wordnet' 모듈 다운로드
 
 # Streamlit 인터페이스
@@ -41,8 +42,18 @@ def get_phonetic(word):
         # JSON 데이터 구조 확인 후 발음기호가 있는 경우 반환
         if data and isinstance(data, list) and 'hwi' in data[0] and 'prs' in data[0]['hwi']:
             return data[0]['hwi']['prs'][0]['mw']
-    except (requests.exceptions.RequestException, KeyError, IndexError) as e:
-        st.error(f"API 오류 발생: {e}")
+        else:
+            st.warning(f"'{word}'에 대한 발음기호가 존재하지 않습니다.")
+    except requests.exceptions.HTTPError as http_err:
+        st.error(f"HTTP 오류 발생: {http_err}")
+    except requests.exceptions.ConnectionError:
+        st.error("인터넷 연결에 문제가 있습니다.")
+    except requests.exceptions.Timeout:
+        st.error("API 요청이 시간 초과되었습니다.")
+    except requests.exceptions.RequestException as req_err:
+        st.error(f"API 요청 오류 발생: {req_err}")
+    except (KeyError, IndexError, TypeError) as json_err:
+        st.error(f"JSON 데이터 처리 오류 발생: {json_err}")
     return "N/A"  # 발음기호가 없는 경우 N/A 반환
 
 # 각 단어를 규칙에 맞게 처리하는 함수
