@@ -5,10 +5,8 @@ import re
 # 프로그램 제목
 st.title("Phonetic Transcription Finder")
 
-st.write("Merriam-Webster Dictionary API 웹사이트에서 무료로 제공하는 API 키를 입력하세요.")
-
 st.markdown("""
-Merriam-Webster Dictionary API 웹사이트에서 무료로 제공하는 API 키를 입력하고,
+Merriam-Webster Dictionary API 웹사이트에서 무료로 제공하는 API 키를 입력하고,  
 하루에 1000개까지 한꺼번에 발음기호를 찾아보세요.
 1. [Merriam-Webster's Developer Center](https://dictionaryapi.com/register/index) 회원가입
    - Request API Key (1) 는 Collegiate Dictionary 선택
