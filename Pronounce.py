@@ -6,8 +6,8 @@ import re
 st.title("Phonetic Transcription Finder")
 
 # API 키 입력 받기
-st.write("Merriam-Webster API 웹사이트에서 제공받는 API 키를 입력하세요: https://dictionaryapi.com")
-API_KEY = st.text_input("API Key를 입력하세요:", type="password")
+st.write("Merriam-Webster API 웹사이트에서 제공받은 API 키를 입력하세요: https://dictionaryapi.com")
+API_KEY = st.text_input("API Key 입력:", type="password")
 
 # 단어 리스트 입력 받기
 st.write("발음기호를 가져올 단어 목록을 입력하세요. (한 줄에 하나씩)")
