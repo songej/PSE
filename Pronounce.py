@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 import re
+import pandas as pd  # pandas 임포트 추가
 
 # 프로그램 제목
 st.title("Phonetic Transcription Finder")
@@ -20,85 +21,81 @@ API_KEY = st.text_input("API Key 입력:", type="password")
 
 # 단어 리스트 입력 받기
 st.write("발음기호를 가져올 단어 목록을 입력하세요. (한 줄에 하나씩)")
-word_list = st.text_area("단어 입력:", height=200).splitlines()  # 여러 줄 입력을 각 라인별로 리스트로 분리
+word_list = st.text_area("단어 입력:", height=200).splitlines()
 
 # API URL 설정
 API_URL = "https://www.dictionaryapi.com/api/v3/references/collegiate/json/{}?key={}"
 
 # 복수형을 단수형으로 변환
 def get_singular(word):
+    """단어를 복수형에서 단수형으로 변환합니다."""
     if word.endswith('ies') and len(word) > 3:
-        return word[:-3] + 'y'  # 예: 'studies' -> 'study'
+        return word[:-3] + 'y'
     elif word.endswith('es') and len(word) > 2:
-        return word[:-2]  # 예: 'wishes' -> 'wish'
+        return word[:-2]
     elif word.endswith('s') and len(word) > 1:
-        return word[:-1]  # 예: 'cats' -> 'cat'
-    return word  # 복수형 변환에 해당하지 않으면 원래 단어 그대로 반환
+        return word[:-1]
+    return word
 
 # 발음기호를 API에서 가져오기
 def get_phonetic(word):
+    """API에서 발음기호를 가져오고 오류를 처리합니다."""
     try:
-        # API 요청 보내기 (타임아웃 설정: 60초)
         response = requests.get(API_URL.format(word, API_KEY), timeout=60)
-        # 응답이 성공적이지 않으면 상태 코드와 메시지 출력
-        response.raise_for_status()        
-        # 빈 응답이 아닌지 확인
+        response.raise_for_status()
         if not response.text.strip():
             st.error("API에서 빈 응답을 받았습니다.")
             return "N/A"
-        # API 응답을 JSON 형태로 변환
         data = response.json()
-        # JSON 데이터 구조 확인 후 발음기호 반환
         if data and isinstance(data, list) and 'hwi' in data[0] and 'prs' in data[0]['hwi']:
-            return data[0]['hwi']['prs'][0].get('mw', "N/A")  # 발음기호(mw)가 없으면 "N/A" 반환
+            return data[0]['hwi']['prs'][0].get('mw', "N/A")
         else:
-            st.warning(f"'{word}'에 대한 발음기호가 존재하지 않습니다.")  # 발음기호가 없으면 사용자에게 경고
+            st.warning(f"'{word}'에 대한 발음기호가 존재하지 않습니다.")
     except requests.exceptions.RequestException as e:
         st.error(f"API 오류 발생: {e}")
     except ValueError:
-        # JSON 변환 중 오류 발생 시 예외 처리
         st.error("API에서 예상하지 않은 응답을 받았습니다. API 키를 확인하세요.")
-    return "N/A"  # 발음기호가 없는 경우 기본값 "N/A" 반환
+    return "N/A"
 
-# 단어를 규칙에 따라 처리하여 발음기호 가져오기
+# 단어 처리 후 발음기호 가져오기
 def process_word(word):
-    # 공백을 모두 제거한 상태에서 단어가 비어있으면 "N/A" 반환
+    """단어의 발음기호를 규칙에 따라 가져옵니다."""
     tokens = re.split(r'([ \-/.])', word)
-    phonetic_tokens = []  # 발음기호 저장
+    phonetic_tokens = []
 
     for token in tokens:
-        if re.match(r'[ \-/.]', token):  # 구분 문자(공백, /, -)는 그대로 추가
+        if re.match(r'[ \-/.]', token):
             phonetic_tokens.append(token)
-        elif token.strip():  # 공백이 아닌 실제 단어인 경우에만 처리
+        elif token.strip():
             transcription = get_phonetic(token)
-            if transcription == "N/A":  # 발음기호가 없는 경우 단수형 변환 후 다시 시도
+            if transcription == "N/A":
                 singular_form = get_singular(token)
                 if singular_form != token:
                     transcription = get_phonetic(singular_form)
                     if transcription != "N/A":
-                        transcription += f" [{singular_form}]"  # 단수형을 [ ]로 표시
-            phonetic_tokens.append(transcription if transcription != "N/A" else "[N/A]")  # N/A를 [N/A]로 변경
+                        transcription += f" [{singular_form}]"
+            phonetic_tokens.append(transcription if transcription != "N/A" else "[N/A]")
 
-    return ''.join(phonetic_tokens)  # 최종적으로 모든 결과를 합쳐서 반환
+    return ''.join(phonetic_tokens)
 
-# 발음기호 찾는 API 호출
+# 발음기호 찾기 버튼 클릭 시
 if st.button("Get Phonetic Transcriptions"):
     if not API_KEY:
         st.error("API Key를 입력하세요.")
     elif word_list:
         with st.spinner("발음기호를 가져오는 중입니다..."):
             transcriptions = {word: process_word(word) for word in word_list if word.strip()}
-        # 발음기호 결과 출력
+        
         df = pd.DataFrame(list(transcriptions.items()), columns=["Word", "Phonetic (with Stress)"])
         df.index += 1
-        st.table(df)
 
-         def highlight_na(value):
-             if '[N/A]' in value:
-                 return 'background-color: yellow'  # [N/A] 포함된 셀 노란색 배경
-             return ''
-         styled_df = df.style.applymap(highlight_na, subset=['Phonetic (with Stress)'])         
-         st.dataframe(styled_df)
-
+        # [N/A]가 포함된 셀을 노란색 배경으로 스타일링
+        def highlight_na(value):
+            if '[N/A]' in value:
+                return 'background-color: yellow'
+            return ''
+        
+        styled_df = df.style.applymap(highlight_na, subset=['Phonetic (with Stress)'])
+        st.dataframe(styled_df)  # 스타일링된 데이터프레임 표시
     else:
         st.warning("단어를 최소 하나 입력하세요.")
