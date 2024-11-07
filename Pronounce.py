@@ -1,97 +1,87 @@
 import streamlit as st
 import requests
 import re
-from nltk.corpus import wordnet
-from nltk import download
 
-# NLTK 다운로드
-try:
-    wordnet.ensure_loaded()  # 'wordnet' 모듈을 사용할 수 있는지 확인
-except LookupError:
-    st.warning("NLTK WordNet 데이터를 다운로드하는 중입니다. 잠시만 기다려 주세요...")
-    download('wordnet')  # 필요 시 'wordnet' 모듈 다운로드
+# Streamlit 인터페이스 구성
+st.title("Phonetic Transcription Finder")  # 프로그램 제목 설정
+st.write("발음기호를 가져올 단어 목록을 입력하세요. (한 줄에 하나씩)")  # 사용자 안내 메시지
 
-# Streamlit 인터페이스
-st.title("Phonetic Transcription Finder")
-st.write("발음기호를 가져올 단어 목록을 입력하세요. (한 줄에 하나씩)")
+# 단어 리스트 입력 받기
+word_list = st.text_area("단어 입력:", height=200).splitlines()  # 여러 줄 입력을 각 라인별로 리스트로 분리
 
-# 단어 리스트 입력
-word_list = st.text_area("단어 입력:", height=200).splitlines()
-
-# API 키 (실제 API 키로 'YOUR_API_KEY'를 교체하세요)
+# API 키 및 URL 설정 (실제 API 키로 'YOUR_API_KEY'를 교체)
 API_KEY = 'YOUR_API_KEY'
 API_URL = "https://www.dictionaryapi.com/api/v3/references/collegiate/json/{}?key={}"
 
-# 단어가 복수형인지 확인하고 단수형으로 변환하는 함수
+# 복수형을 단수형으로 변환하는 규칙 기반 함수
+# 영어의 단순 복수형에서 단수형으로 변환하여 발음기호를 더 정확히 찾도록 보조함
 def get_singular(word):
-    if not word:  # 단어가 비어 있을 경우 처리
-        return word
-    synsets = wordnet.synsets(word)
-    if synsets and synsets[0].lemma_names()[0] == word:
-        return word
-    if word.endswith('s'):
-        return word[:-1]
-    return word
+    if word.endswith('ies') and len(word) > 3:
+        return word[:-3] + 'y'  # 예: 'studies' -> 'study'
+    elif word.endswith('es') and len(word) > 2:
+        return word[:-2]  # 예: 'wishes' -> 'wish'
+    elif word.endswith('s') and len(word) > 1:
+        return word[:-1]  # 예: 'cats' -> 'cat'
+    return word  # 복수형 변환에 해당하지 않으면 원래 단어 그대로 반환
 
-# 발음기호를 가져오는 함수
+# 발음기호를 API에서 가져오는 함수
 def get_phonetic(word):
     try:
-        response = requests.get(API_URL.format(word, API_KEY))
-        response.raise_for_status()  # HTTP 에러 발생 시 예외 처리
+        # API 요청 보내기 (타임아웃 설정: 10초)
+        response = requests.get(API_URL.format(word, API_KEY), timeout=10)
+        response.raise_for_status()  # HTTP 상태 코드가 오류인 경우 예외 발생
+        
+        # API 응답을 JSON 형태로 변환
         data = response.json()
-        # JSON 데이터 구조 확인 후 발음기호가 있는 경우 반환
+        
+        # JSON 데이터 구조 확인 후 발음기호 반환
+        # 'hwi' 키가 존재하고, 그 안에 'prs' 배열이 있으면 발음기호 반환
         if data and isinstance(data, list) and 'hwi' in data[0] and 'prs' in data[0]['hwi']:
-            return data[0]['hwi']['prs'][0]['mw']
+            return data[0]['hwi']['prs'][0].get('mw', "N/A")  # 발음기호(mw)가 없으면 "N/A" 반환
         else:
-            st.warning(f"'{word}'에 대한 발음기호가 존재하지 않습니다.")
-    except requests.exceptions.HTTPError as http_err:
-        st.error(f"HTTP 오류 발생: {http_err}")
-    except requests.exceptions.ConnectionError:
-        st.error("인터넷 연결에 문제가 있습니다.")
-    except requests.exceptions.Timeout:
-        st.error("API 요청이 시간 초과되었습니다.")
-    except requests.exceptions.RequestException as req_err:
-        st.error(f"API 요청 오류 발생: {req_err}")
-    except (KeyError, IndexError, TypeError) as json_err:
-        st.error(f"JSON 데이터 처리 오류 발생: {json_err}")
-    return "N/A"  # 발음기호가 없는 경우 N/A 반환
+            st.warning(f"'{word}'에 대한 발음기호가 존재하지 않습니다.")  # 발음기호가 없으면 사용자에게 경고
+    except requests.exceptions.RequestException as e:
+        # 네트워크 문제나 HTTP 오류 발생 시 에러 메시지 출력
+        st.error(f"API 오류 발생: {e}")
+    except ValueError:
+        # JSON 변환 중 오류 발생 시 예외 처리
+        st.error("JSON 데이터를 파싱하는 중 오류가 발생했습니다.")
+    return "N/A"  # 발음기호가 없는 경우 기본값 "N/A" 반환
 
-# 각 단어를 규칙에 맞게 처리하는 함수
+# 단어를 규칙에 따라 처리하여 발음기호를 가져오는 함수
 def process_word(word):
-    # 단어가 비어 있거나 공백인 경우 건너뜀
-    if not word.strip():
+    if not word.strip():  # 공백 또는 빈 문자열인 경우 "N/A" 반환
         return "N/A"
     
-    # 규칙 #1: 구분자로 분리하여 각 토큰을 개별적으로 처리하고, 원래 구분자로 다시 결합
-    tokens = re.split(r'([ \-/.])', word)  # 구분자로 단어 분리
-    phonetic_tokens = []
-    
+    # 단어를 구분 문자(공백, 하이픈, 슬래시, 점)로 분리하여 각각의 토큰 생성
+    tokens = re.split(r'([ \-/.])', word)
+    phonetic_tokens = []  # 발음기호 저장 리스트
+
+    # 각 토큰을 반복 처리
     for token in tokens:
-        if re.match(r'[ \-/.]', token):  # 구분자는 그대로 추가
+        if re.match(r'[ \-/.]', token):  # 구분 문자 그대로 저장
             phonetic_tokens.append(token)
         else:
-            # 발음기호를 가져오고, 실패 시 단수형 변환 후 재시도
+            # API에서 발음기호 가져오기
             transcription = get_phonetic(token)
-            if transcription == "N/A":
+            if transcription == "N/A":  # 발음기호가 없는 경우 단수형 변환 후 다시 시도
                 singular_form = get_singular(token)
-                # 단수형으로 변환한 단어로 발음기호 재시도
-                if singular_form != token:
+                if singular_form != token:  # 단수형이 원래 단어와 다를 때만 요청
                     transcription = get_phonetic(singular_form)
-                    # 단수형으로 성공 시 "(단수형)"으로 표시
                     if transcription != "N/A":
-                        transcription += f" ({singular_form})"
+                        transcription += f" ({singular_form})"  # 단수형이 찾은 발음기호에 표시
             phonetic_tokens.append(transcription if transcription != "N/A" else "N/A")
 
-    return ''.join(phonetic_tokens)  # 원래 구분자로 결합하여 반환
+    return ''.join(phonetic_tokens)  # 최종적으로 모든 토큰 합쳐서 반환
 
-# API 호출을 위한 버튼
+# API 호출 버튼 - 클릭 시 발음기호 찾기
 if st.button("Get Phonetic Transcriptions"):
-    if word_list:
-        # 발음기호 가져오기 및 결과 표시
+    if word_list:  # 단어가 입력된 경우에만 실행
+        # 입력된 단어 목록을 처리하여 발음기호 사전 생성
         transcriptions = {word: process_word(word) for word in word_list if word.strip()}
         
-        # 결과를 테이블 형태로 출력
+        # 발음기호 결과 출력
         st.write("## Phonetic Transcriptions")
-        st.table(list(transcriptions.items()))
+        st.table(list(transcriptions.items()))  # 단어와 발음기호를 테이블 형태로 출력
     else:
-        st.warning("단어를 최소 하나 입력하세요.")
+        st.warning("단어를 최소 하나 입력하세요.")  # 단어 미입력 시 경고 메시지
