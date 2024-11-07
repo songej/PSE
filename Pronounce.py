@@ -5,8 +5,17 @@ import re
 # 프로그램 제목
 st.title("Phonetic Transcription Finder")
 
+st.write("Merriam-Webster API 웹사이트에서 무료로 제공하는 API 키를 입력하세요")
+
+st.markdown("""
+1. [Merriam-Webster's Developer Center](https://dictionaryapi.com/register/index) 회원가입
+   - **Request API Key (1)** 는 Collegiate Dictionary 선택
+   - **Request API Key (2)** 는 Learners Dictionary 선택
+2. 이메일 인증
+3. [Your Keys 페이지](https://dictionaryapi.com/account/my-keys) 에서 **Key (Dictionary)**: 부분의 코드를 복사해서 붙여넣기
+""")
+
 # API 키 입력 받기
-st.write("Merriam-Webster API 웹사이트에서 제공받은 API 키를 입력하세요: https://dictionaryapi.com")
 API_KEY = st.text_input("API Key 입력:", type="password")
 
 # 단어 리스트 입력 받기
