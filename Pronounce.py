@@ -92,5 +92,13 @@ if st.button("Get Phonetic Transcriptions"):
         df = pd.DataFrame(list(transcriptions.items()), columns=["Word", "Phonetic (with Stress)"])
         df.index += 1
         st.table(df)
+
+         def highlight_na(value):
+             if '[N/A]' in value:
+                 return 'background-color: yellow'  # [N/A] 포함된 셀 노란색 배경
+             return ''
+         styled_df = df.style.applymap(highlight_na, subset=['Phonetic (with Stress)'])         
+         st.dataframe(styled_df)
+
     else:
         st.warning("단어를 최소 하나 입력하세요.")
