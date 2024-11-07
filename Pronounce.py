@@ -2,20 +2,21 @@ import streamlit as st
 import requests
 import re
 
-# Streamlit 인터페이스 구성
-st.title("Phonetic Transcription Finder")  # 프로그램 제목 설정
-st.write("발음기호를 가져올 단어 목록을 입력하세요. (한 줄에 하나씩)")  # 사용자 안내 메시지
+# Streamlit 인터페이스
+st.title("Phonetic Transcription Finder")  # 프로그램 제목
+st.write("발음기호를 가져올 단어 목록을 입력하세요. (한 줄에 하나씩)")  # 사용자 안내
 
-# 사용자로부터 API 키 입력 받기
+# API 키 입력 받기
+st.write("Merriam-Webster API 사이트(https://dictionaryapi.com)에서 제공받은 API Key를 입력하세요.")
 API_KEY = st.text_input("API Key를 입력하세요:", type="password")
 
 # 단어 리스트 입력 받기
 word_list = st.text_area("단어 입력:", height=200).splitlines()  # 여러 줄 입력을 각 라인별로 리스트로 분리
 
-# API URL 설정 (API 키는 사용자가 입력한 값을 활용)
+# API URL 설정
 API_URL = "https://www.dictionaryapi.com/api/v3/references/collegiate/json/{}?key={}"
 
-# 복수형을 단수형으로 변환하는 규칙 기반 함수
+# 복수형을 단수형으로 변환
 def get_singular(word):
     if word.endswith('ies') and len(word) > 3:
         return word[:-3] + 'y'  # 예: 'studies' -> 'study'
@@ -25,16 +26,19 @@ def get_singular(word):
         return word[:-1]  # 예: 'cats' -> 'cat'
     return word  # 복수형 변환에 해당하지 않으면 원래 단어 그대로 반환
 
-# 발음기호를 API에서 가져오는 함수
+# 발음기호를 API에서 가져오기
 def get_phonetic(word):
     try:
-        # API 요청 보내기 (타임아웃 설정: 10초)
-        response = requests.get(API_URL.format(word, API_KEY), timeout=10)
-        response.raise_for_status()  # HTTP 상태 코드가 오류인 경우 예외 발생
-        
+        # API 요청 보내기 (타임아웃 설정: 60초)
+        response = requests.get(API_URL.format(word, API_KEY), timeout=60)
+        # 응답이 성공적이지 않으면 상태 코드와 메시지 출력
+        response.raise_for_status()        
+        # 빈 응답이 아닌지 확인
+        if not response.text.strip():
+            st.error("API에서 빈 응답을 받았습니다.")
+            return "N/A"
         # API 응답을 JSON 형태로 변환
         data = response.json()
-        
         # JSON 데이터 구조 확인 후 발음기호 반환
         if data and isinstance(data, list) and 'hwi' in data[0] and 'prs' in data[0]['hwi']:
             return data[0]['hwi']['prs'][0].get('mw', "N/A")  # 발음기호(mw)가 없으면 "N/A" 반환
@@ -43,42 +47,41 @@ def get_phonetic(word):
     except requests.exceptions.RequestException as e:
         st.error(f"API 오류 발생: {e}")
     except ValueError:
-        st.error("JSON 데이터를 파싱하는 중 오류가 발생했습니다.")
+        # JSON 변환 중 오류 발생 시 예외 처리
+        st.error("API에서 예상하지 않은 응답을 받았습니다. API 키를 확인하세요.")
     return "N/A"  # 발음기호가 없는 경우 기본값 "N/A" 반환
 
-# 단어를 규칙에 따라 처리하여 발음기호를 가져오는 함수
+# 단어를 규칙에 따라 처리하여 발음기호 가져오기
 def process_word(word):
-    if not word.strip():  # 공백 또는 빈 문자열인 경우 "N/A" 반환
-        return "N/A"
-    
+    # 공백을 모두 제거한 상태에서 단어가 비어있으면 "N/A" 반환
     tokens = re.split(r'([ \-/.])', word)
-    phonetic_tokens = []  # 발음기호 저장 리스트
+    phonetic_tokens = []  # 발음기호 저장
 
     for token in tokens:
-        if re.match(r'[ \-/.]', token):  # 구분 문자 그대로 저장
+        if re.match(r'[ \-/.]', token):  # 구분 문자(공백, /, -)는 그대로 추가
             phonetic_tokens.append(token)
-        else:
+        elif token.strip():  # 공백이 아닌 실제 단어인 경우에만 처리
             transcription = get_phonetic(token)
             if transcription == "N/A":  # 발음기호가 없는 경우 단수형 변환 후 다시 시도
                 singular_form = get_singular(token)
                 if singular_form != token:
                     transcription = get_phonetic(singular_form)
                     if transcription != "N/A":
-                        transcription += f" ({singular_form})"
-            phonetic_tokens.append(transcription if transcription != "N/A" else "N/A")
+                        transcription += f" [{singular_form}]"  # 단수형을 [ ]로 표시
+            phonetic_tokens.append(transcription if transcription != "N/A" else "[N/A]")  # N/A를 [N/A]로 변경
 
-    return ''.join(phonetic_tokens)  # 최종적으로 모든 토큰 합쳐서 반환
+    return ''.join(phonetic_tokens)  # 최종적으로 모든 결과를 합쳐서 반환
 
-# API 호출 버튼 - 클릭 시 발음기호 찾기
+# 발음기호 찾는 API 호출
 if st.button("Get Phonetic Transcriptions"):
     if not API_KEY:
-        st.error("API Key를 입력하세요.")  # API 키가 입력되지 않은 경우 오류 메시지
-    elif word_list:  # 단어가 입력된 경우에만 실행
-        with st.spinner("발음기호를 가져오는 중입니다..."):  # 스피너 추가
-            transcriptions = {word: process_word(word) for word in word_list if word.strip()}
-        
+        st.error("API Key를 입력하세요.")
+    elif word_list:
+        with st.spinner("발음기호를 가져오는 중입니다..."):
+            transcriptions = {word: process_word(word) for word in word_list if word.strip()}        
+            
         # 발음기호 결과 출력
         st.write("## Phonetic Transcriptions")
-        st.table(list(transcriptions.items()))  # 단어와 발음기호를 테이블 형태로 출력
+        st.table(list(transcriptions.items()))
     else:
-        st.warning("단어를 최소 하나 입력하세요.")  # 단어 미입력 시 경고 메시지
+        st.warning("단어를 최소 하나 입력하세요.")
