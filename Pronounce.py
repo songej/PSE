@@ -81,7 +81,7 @@ if st.button("Get Phonetic Transcriptions"):
     elif word_list:
         with st.spinner("발음기호를 가져오는 중입니다..."):
             transcriptions = {word: process_word(word) for word in word_list if word.strip()}
-        
+# 발음기호 출력
         df = pd.DataFrame(list(transcriptions.items()), columns=["Word", "Phonetic (with Stress)"])
         df.index += 1
         def highlight_na(value):
