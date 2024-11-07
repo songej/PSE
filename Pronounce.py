@@ -2,15 +2,15 @@ import streamlit as st
 import requests
 import re
 
-# Streamlit 인터페이스
-st.title("Phonetic Transcription Finder")  # 프로그램 제목
-st.write("발음기호를 가져올 단어 목록을 입력하세요. (한 줄에 하나씩)")  # 사용자 안내
+# 프로그램 제목
+st.title("Phonetic Transcription Finder")
 
 # API 키 입력 받기
-st.write("Merriam-Webster API 사이트(https://dictionaryapi.com)에서 제공받은 API Key를 입력하세요.")
+st.write("Merriam-Webster API 웹사이트에서 제공받는 API 키를 입력하세요: https://dictionaryapi.com")
 API_KEY = st.text_input("API Key를 입력하세요:", type="password")
 
 # 단어 리스트 입력 받기
+st.write("발음기호를 가져올 단어 목록을 입력하세요. (한 줄에 하나씩)")
 word_list = st.text_area("단어 입력:", height=200).splitlines()  # 여러 줄 입력을 각 라인별로 리스트로 분리
 
 # API URL 설정
