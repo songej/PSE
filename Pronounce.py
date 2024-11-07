@@ -6,11 +6,13 @@ import re
 st.title("Phonetic Transcription Finder")  # 프로그램 제목 설정
 st.write("발음기호를 가져올 단어 목록을 입력하세요. (한 줄에 하나씩)")  # 사용자 안내 메시지
 
+# 사용자로부터 API 키 입력 받기
+API_KEY = st.text_input("API Key를 입력하세요:", type="password")
+
 # 단어 리스트 입력 받기
 word_list = st.text_area("단어 입력:", height=200).splitlines()  # 여러 줄 입력을 각 라인별로 리스트로 분리
 
-# API 키 및 URL 설정 (실제 API 키로 'YOUR_API_KEY'를 교체)
-API_KEY = 'YOUR_API_KEY'
+# API URL 설정 (API 키는 사용자가 입력한 값을 활용)
 API_URL = "https://www.dictionaryapi.com/api/v3/references/collegiate/json/{}?key={}"
 
 # 복수형을 단수형으로 변환하는 규칙 기반 함수
@@ -69,7 +71,9 @@ def process_word(word):
 
 # API 호출 버튼 - 클릭 시 발음기호 찾기
 if st.button("Get Phonetic Transcriptions"):
-    if word_list:  # 단어가 입력된 경우에만 실행
+    if not API_KEY:
+        st.error("API Key를 입력하세요.")  # API 키가 입력되지 않은 경우 오류 메시지
+    elif word_list:  # 단어가 입력된 경우에만 실행
         with st.spinner("발음기호를 가져오는 중입니다..."):  # 스피너 추가
             transcriptions = {word: process_word(word) for word in word_list if word.strip()}
         
