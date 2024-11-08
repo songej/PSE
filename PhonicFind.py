@@ -2,13 +2,43 @@ import streamlit as st
 import requests
 import re
 import pandas as pd
-import time  # API 요청 간의 지연을 위해 추가
+import time
 
 st.set_page_config(page_title="PhonicFind", page_icon="🔠")
 
+st.markdown(
+    """
+    <style>
+    @media (max-width: 768px) {
+        .block-container {
+            padding-top: 1rem;
+        }
+        .stButton button {
+            font-size: 16px;
+            padding: 8px;
+        }
+        .stMarkdown p {
+            font-size: 16px;
+        }
+    }
+    </style>
+    """, unsafe_allow_html=True
+)
+
 st.title("PhonicFind: PSE 발음기호 찾기")
 
+st.markdown("""
+Merriam-Webster Dictionary API 웹사이트에서 무료로 제공하는 API 키를 입력하고,  
+하루에 1000 단어까지 한꺼번에 발음기호를 찾아보세요.
+1. [Merriam-Webster's Developer Center](https://dictionaryapi.com/register/index) 회원가입
+   - Request API Key (1) 는 Collegiate Dictionary 선택
+   - Request API Key (2) 는 Learners Dictionary 선택
+2. 이메일 인증
+3. [Your Keys 페이지](https://dictionaryapi.com/account/my-keys) 에서 Key (Dictionary): 부분의 코드를 복사해서 붙여넣기
+""")
+
 API_KEY = st.text_input("API Key 입력:", type="password")
+
 st.write("발음기호를 가져올 단어 목록을 입력하세요. (한 줄에 하나씩)")
 word_list = st.text_area("단어 입력:", height=200).splitlines()
 
@@ -42,22 +72,22 @@ def get_phonetic(word):
     return "N/A"
 
 # 단어 처리 후 발음기호 가져오기
-def process_word(word):
-    tokens = re.split(r'([ \-/,;.!?:])', word)
+def process_word(word): 
+    tokens = re.split(r'([ \-/,;.!?:])', word)  # 다양한 구분자 고려
     phonetic_tokens = []
     for token in tokens:
-        if re.match(r'[ \-/,;.!?:]', token):
+        if re.match(r'[ \-/,;.!?:]', token):  # 발음기호에 구분자 추가
             phonetic_tokens.append(token)
-        elif token.strip():
+        elif token.strip():  # 공백이 아닌 실제 단어만 처리
             transcription = get_phonetic(token)
-            if transcription == "N/A":
+            if transcription == "N/A":  # 발음기호가 없는 경우 단수형 변환 후 다시 시도
                 singular_form = get_singular(token)
                 if singular_form != token:
                     transcription = get_phonetic(singular_form)
                     if transcription != "N/A":
-                        transcription += f" [{singular_form}]"
+                        transcription += f" [{singular_form}]"  # 단수형 단어를 [ ]로 표시
             phonetic_tokens.append(transcription if transcription != "N/A" else "[N/A]")
-            time.sleep(0.5)  # API 요청 사이에 지연 추가
+            time.sleep(0.5)  # API 요청 사이 지연
     return ''.join(phonetic_tokens)
 
 # 발음기호 가져오기 실행
