@@ -9,7 +9,7 @@ st.title("PhonicFind: PSE 발음기호 찾기")
 
 st.markdown("""
 Merriam-Webster Dictionary API 웹사이트에서 무료로 제공하는 API 키를 입력하고,  
-하루에 1000개까지 한꺼번에 발음기호를 찾아보세요.
+하루에 1000 단어까지 한꺼번에 발음기호를 찾아보세요.
 1. [Merriam-Webster's Developer Center](https://dictionaryapi.com/register/index) 회원가입
    - Request API Key (1) 는 Collegiate Dictionary 선택
    - Request API Key (2) 는 Learners Dictionary 선택
