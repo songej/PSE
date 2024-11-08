@@ -24,7 +24,7 @@ st.markdown(
 
 st.title('PSE StudyMate')
 
-all_members = ['Ruby', 'Sujin', 'Rae', 'Angela']
+all_members = ['Ruby', 'Sujin', 'Rae', 'Angela', 'Jayden']
 
 present_members = st.multiselect("Select Members", all_members, default=all_members)
 
