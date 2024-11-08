@@ -3,7 +3,26 @@ import requests
 import re
 import pandas as pd
 
-st.set_page_config(layout="wide", page_title="PronFind", page_icon="🔠")
+st.set_page_config(page_title="PronFind", page_icon="🔠")
+
+st.markdown(
+    """
+    <style>
+    @media (max-width: 768px) {
+        .block-container {
+            padding-top: 1rem;
+        }
+        .stButton button {
+            font-size: 16px;
+            padding: 8px;
+        }
+        .stMarkdown p {
+            font-size: 16px;
+        }
+    }
+    </style>
+    """, unsafe_allow_html=True
+)
 
 st.title("PhonicFind: PSE 발음기호 찾기")
 
