@@ -119,8 +119,8 @@ if st.button("Get Phonetic Transcriptions"):
             if missing_words:
                 st.warning(f"발음기호를 찾지 못한 단어들: {', '.join(missing_words)}")
 
-            # CSV 다운로드
-            csv = df.to_csv(index=False).encode('utf-8')
+            # CSV 다운로드 (UTF-8 with BOM)
+            csv = df.to_csv(index=False, encoding='utf-8-sig').encode('utf-8-sig')
             st.download_button(
                 label="Download as CSV",
                 data=csv,
