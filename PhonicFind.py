@@ -112,7 +112,7 @@ if st.button("Get Phonetic Transcriptions"):
                     return 'background-color: yellow'
                 return ''
             styled_df = df.style.applymap(highlight_na, subset=['Phonetic (with Stress)'])
-            st.dataframe(styled_df)
+            st.table(styled_df)
             
             # 누락된 단어 표시
             if missing_words:
