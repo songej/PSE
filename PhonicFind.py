@@ -127,17 +127,5 @@ if st.button("Get Phonetic Transcriptions"):
                 file_name='phonetic_transcriptions.csv',
                 mime='text/csv'
             )
-            # Excel 다운로드
-            output = io.BytesIO()
-            with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-                df.to_excel(writer, index=False, sheet_name='Phonetic Transcriptions')
-                writer.save()
-                excel_data = output.getvalue()
-            st.download_button(
-                label="Download as Excel",
-                data=excel_data,
-                file_name='phonetic_transcriptions.xlsx',
-                mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            )
     else:
         st.warning("단어를 최소 하나 입력하세요.")
