@@ -25,7 +25,7 @@ st.markdown(
     """, unsafe_allow_html=True
 )
 
-st.title("PhonicFind: PSE 발음기호 찾기")
+st.title("PhonicFind: PSE 발음찾기")
 
 st.markdown("""
 메리엄-웹스터 사전에서 무료로 제공하는 API 키를 입력하고,  
