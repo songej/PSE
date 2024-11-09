@@ -96,16 +96,16 @@ if st.button("Get Phonetic Transcriptions"):
         st.error("API Key를 입력하세요.")
     elif word_list:
         with st.spinner("발음기호를 가져오는 중입니다..."):
-            transcriptions = {}
+            results = []  # 결과를 저장할 리스트로 수정
             missing_words = []
             for word in word_list:
                 if word.strip():
                     transcription = process_word(word)
-                    transcriptions[word] = transcription
+                    results.append((word, transcription))  # 리스트에 단어와 발음기호 추가
                     if "[N/A]" in transcription:
                         missing_words.append(word)
             # 결과 출력
-            df = pd.DataFrame(list(transcriptions.items()), columns=["Word", "Phonetic (with Stress)"])
+            df = pd.DataFrame(results, columns=["Word", "Phonetic (with Stress)"])  # 리스트를 데이터프레임으로 변환
             df.index += 1
             def highlight_na(value):
                 if '[N/A]' in value:
@@ -119,3 +119,4 @@ if st.button("Get Phonetic Transcriptions"):
                 st.warning(f"발음기호를 찾지 못한 단어들: {', '.join(missing_words)}")
     else:
         st.warning("단어를 최소 하나 입력하세요.")
+
