@@ -57,7 +57,7 @@ def get_singular(word):
 # API에서 발음기호 가져오기
 def get_phonetic(word):
     try:
-        response = requests.get(API_URL.format(word, API_KEY), timeout=60)
+        response = requests.get(API_URL.format(word, API_KEY), timeout=180)
         response.raise_for_status()
         data = response.json()
         
@@ -87,7 +87,7 @@ def process_word(word):
                     if transcription != "N/A":
                         transcription += f" [{singular_form}]"  # 단수형 단어를 [ ]로 표시
             phonetic_tokens.append(transcription if transcription != "N/A" else "[N/A]")
-            time.sleep(0.5)  # API 요청 사이 지연
+            time.sleep(0.1)  # API 요청 사이 지연
     return ''.join(phonetic_tokens)
 
 # 발음기호 가져오기 실행
