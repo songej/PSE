@@ -176,9 +176,10 @@ def convert_to_pse(ipa: str) -> str:
             ipa = ipa.replace(pattern, pse)
 
     # 2. 강세 기호 변환을 모든 `ˈ` 뒤의 첫 모음에 반복 적용
+    # `ˈ` 뒤의 다양한 모음 패턴을 모두 처리하고 한 번에 한 강세 기호를 변환
     while "ˈ" in ipa:
         ipa = re.sub(
-            r"ˈ((?:ɑi|ei|oi|ou|ɑu|[iueɔʌəɑæ]+:?r?))",  # 다양한 모음 패턴에 대응
+            r"ˈ((?:ɑi|ei|oi|ou|ɑu|[iueɔʌəɑæ]+:?r?))",  # 단일 모음, 이중 모음 및 모음+r 패턴
             lambda m: vowel_mapping.get(m.group(1), m.group(1)),
             ipa,
             count=1  # 한 번에 한 강세 변환
