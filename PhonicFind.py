@@ -88,10 +88,9 @@ def process_word(word, api_key):
     return ''.join(phonetic_tokens)
 
 # PSE 변환 규칙
-# 변환 표 정의 (긴 문자열 우선 순위 및 새로운 규칙 포함)
 conversion_table = {
     "au̇": "ɑu",
-    "ȯi자음": "oi:",  # 자음이 뒤따르는 경우
+    "ȯi자음": "oi:",
     "ȯi": "oi",
     "ī자음": "ɑi:",
     "ī": "ɑi",
@@ -117,22 +116,32 @@ conversion_table = {
     "sh": "ʃ"
 }
 
-# 모든 모음에 대응하는 강세 기호 매핑
+# 모음 강세 기호
 vowel_mapping = {
-    "a": "ǽ",
-    "e": "é",
     "i": "í",
-    "o": "ó",
-    "u": "ú",
+    "e": "é",
+    "ʌ": "ʌ́",
+    "ɑ:": "ɑ́:",
+    "æ": "ǽ",
+    "ɔ:": "ɔ́:",
+    "u:": "ú:",
+    "i:": "í:",
     "ə": "ə́",
-    "ä": "ǽ",
-    "ȯ": "ǿ",
-    "ü": "ǘ",
-    "ē": "ḗ",
-    "ī": "ḯ",
-    "ā": "ǣ",
-    "ō": "ṓ",
-    "u̇": "ṹ"
+    "u": "ú",
+    "ɑi": "ɑ́i",
+    "ɑi:": "ɑ́i:",
+    "ei": "éi",
+    "ei:": "éi:",
+    "oi": "ói",
+    "oi:": "ói:",
+    "ou": "óu",
+    "ɑu": "ɑ́u",
+    "ər": "ə́r",
+    "er": "ér",
+    "i:r": "í:r",
+    "or": "ór",
+    "ɔ:r": "ɔ́:r",
+    "u:r": "ú:r"
 }
 
 # 자음 정의
@@ -140,20 +149,23 @@ consonant_pattern = r"[bcdfghjklmnpqrstvwxyz]"
 
 # PSE 규칙 변환
 def convert_to_pse(ipa: str) -> str:
+    # 변환 규칙 적용
+    for pattern, pse in conversion_table.items():
+        if pattern.endswith("자음"):
+            base_pattern = pattern[:-2]
+            ipa = re.sub(f"{base_pattern}(?=[{consonant_pattern}])", pse, ipa)
+        else:
+            ipa = ipa.replace(pattern, pse)
+
+    # 강세 적용
     ipa = re.sub(
-        r"ˈ([aeiouəäȯüēīāōu̇])",  # ˈ뒤의 첫모음 강세
+        r"ˈ((?:ɑi|ei|oi|ou|ɑu|[iueɔʌəɑæ]+:?r?))",
         lambda m: vowel_mapping.get(m.group(1), m.group(1)),
         ipa,
         count=1
     )
+    ipa = ipa.replace("ˈ", "")
     
-    for pattern, pse in conversion_table.items():
-        if pattern.endswith("자음"):  # 자음 여부를 판단
-            base_pattern = pattern[:-2]
-            if re.match(f"^{base_pattern}({consonant_pattern})", ipa):
-                return pse
-        elif ipa.startswith(pattern):
-            return pse
     return ipa
 
 # API Key 유효성 검증
