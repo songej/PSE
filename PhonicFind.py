@@ -47,7 +47,7 @@ API_URL = "https://www.dictionaryapi.com/api/v3/references/collegiate/json/{}?ke
 
 @lru_cache(maxsize=1000)
 def get_singular(word):
-    """복수형을 단수형으로 변환하는 함수."""
+    """복수형을 단수형으로 변환"""
     if word.endswith('ies') and len(word) > 3:
         return word[:-3] + 'y'
     elif word.endswith('es') and len(word) > 2:
@@ -58,7 +58,7 @@ def get_singular(word):
 
 @lru_cache(maxsize=1000)
 def get_phonetic(word):
-    """단어의 발음기호를 가져오는 함수."""
+    """발음기호 가져오기"""
     try:
         response = requests.get(API_URL.format(word, API_KEY), timeout=10)
         response.raise_for_status()
@@ -75,7 +75,7 @@ def get_phonetic(word):
     return "N/A"
 
 def process_word(word): 
-    """문장을 토큰화하여 각 단어의 발음기호를 가져오는 함수."""
+    """각 단어의 발음기호 가져오기"""
     tokens = re.split(r'([ \-/,;.!?:])', word)
     phonetic_tokens = []
     for token in tokens:
@@ -94,7 +94,7 @@ def process_word(word):
     return ''.join(phonetic_tokens)
 
 def validate_api_key(api_key):
-    """API Key 유효성 검증 함수."""
+    """API Key 유효성 검증"""
     test_word = "test"
     try:
         response = requests.get(API_URL.format(test_word, api_key), timeout=10)
@@ -103,6 +103,9 @@ def validate_api_key(api_key):
         return isinstance(data, list)
     except requests.exceptions.RequestException:
         return False
+
+if "results_df" not in st.session_state:
+    st.session_state["results_df"] = pd.DataFrame()
 
 if st.button("발음기호 알아보기"):
     if not API_KEY:
@@ -122,20 +125,23 @@ if st.button("발음기호 알아보기"):
                 
             df = pd.DataFrame(results, columns=["Word", "Phonetic (with Stress)"])
             df.index += 1
-            def highlight_na(value):
-                return 'background-color: yellow' if '[N/A]' in value else ''
-            styled_df = df.style.applymap(highlight_na, subset=['Phonetic (with Stress)'])
-            st.table(styled_df)
-
+            st.session_state["results_df"] = df  # 결과표 세션 저장
             if missing_words:
                 st.warning(f"발음기호를 찾지 못한 단어들: {', '.join(missing_words)}")
 
-            csv = df.to_csv(index=True, encoding='utf-8-sig').encode('utf-8-sig')
-            st.download_button(
-                label="결과표 다운로드",
-                data=csv,
-                file_name='phonetic_transcriptions.csv',
-                mime='text/csv'
-            )
-    else:
-        st.warning("최소 한 단어를 입력하세요.")
+# 결과표 세션 유지
+if not st.session_state["results_df"].empty:
+    df = st.session_state["results_df"]
+    def highlight_na(value):
+        return 'background-color: yellow' if '[N/A]' in value else ''
+    styled_df = df.style.applymap(highlight_na, subset=['Phonetic (with Stress)'])
+    st.table(styled_df)
+
+    # CSV 다운로드 (UTF-8 with BOM)
+    csv = df.to_csv(index=True, encoding='utf-8-sig').encode('utf-8-sig')
+    st.download_button(
+        label="결과표 다운로드",
+        data=csv,
+        file_name='phonetic_transcriptions.csv',
+        mime='text/csv'
+    )
