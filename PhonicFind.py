@@ -93,9 +93,10 @@ def process_word(word, api_key):
                     if transcription != "N/A":
                         transcription += f" [{singular_form}]"
                 
-                # 여전히 N/A라면 캐시에 추가
+                # 여전히 N/A라면 캐시에 추가하고 `[N/A]`로 표시
                 if transcription == "N/A":
                     na_cache.add(token)
+                    transcription = "[N/A]"  # 결과를 [N/A]로 표시
             
             # 최종 transcription 결과 저장
             phonetic_tokens.append(transcription)
