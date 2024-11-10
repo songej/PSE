@@ -120,7 +120,7 @@ if st.button("발음기호 알아보기"):
             df.index += 1
             st.session_state["results_df"] = df
             if missing_words:
-                st.warning(f"발음기호를 찾지 못한 단어들: {', '.join(missing_words)}")
+                st.warning(f"발음기호를 찾지 못한 단어: {', '.join(missing_words)}")
 
 # 결과표 세션 유지
 if not st.session_state["results_df"].empty:
