@@ -75,16 +75,25 @@ def process_word(word, api_key):
         if re.match(r'[ \-/,;.!?:]', token):
             phonetic_tokens.append(token)
         elif token.strip():
+            # 첫 번째 API 호출
             transcription = get_phonetic(token, api_key)
+            
+            # 결과가 N/A가 아닌 경우에만 복수형 변환 시도
             if transcription == "N/A":
                 singular_form = get_singular(token)
                 if singular_form != token:
                     transcription = get_phonetic(singular_form, api_key)
+                    # 변환 후 결과가 있으면 변환된 형태를 표시
                     if transcription != "N/A":
                         transcription += f" [{singular_form}]"
-            phonetic_tokens.append(transcription if transcription != "N/A" else "[N/A]")
-            time.sleep(delay)
-            delay = min(delay + 0.05, 0.5)
+            phonetic_tokens.append(transcription)
+            
+            # N/A인 경우에도 불필요한 지연을 줄이기 위해 지연 시간 감소
+            if transcription == "N/A":
+                delay = min(delay, 0.1)
+            else:
+                time.sleep(delay)
+                delay = min(delay + 0.05, 0.5)  # 지연 시간 증가
     return ''.join(phonetic_tokens)
 
 # PSE 변환 규칙
