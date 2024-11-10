@@ -148,8 +148,9 @@ vowel_mapping = {
 consonant_pattern = r"[bcdfghjklmnpqrstvwxyz]"
 
 # PSE 규칙 변환
+# PSE 규칙 변환
 def convert_to_pse(ipa: str) -> str:
-    # 1. PSE 변환 규칙 적용
+    # 1. PSE 변환 규칙을 적용
     for pattern, pse in conversion_table.items():
         if pattern.endswith("자음"):
             base_pattern = pattern[:-2]
@@ -157,9 +158,9 @@ def convert_to_pse(ipa: str) -> str:
         else:
             ipa = ipa.replace(pattern, pse)
 
-    # 2. 강세 기호 변환 적용: 모든 `ˈ` 기호 뒤에 나타나는 첫 모음에 강세 부여
+    # 2. 모든 `ˈ` 기호 뒤에 나타나는 첫 모음에 강세 기호 적용
     ipa = re.sub(
-        r"ˈ((?:ɑi|ei|oi|ou|ɑu|[iueɔʌəɑæ]+:?r?))",  # 다양한 모음 패턴에 대응
+        r"ˈ((?:ɑi|ei|oi|ou|ɑu|[iueɔʌəɑæ]+:?r?))",  # 모든 모음 패턴에 대응
         lambda m: vowel_mapping.get(m.group(1), m.group(1)),
         ipa
     )
