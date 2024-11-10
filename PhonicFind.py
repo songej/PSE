@@ -83,6 +83,49 @@ def process_word(word, api_key):
             delay = min(delay + 0.05, 0.5)
     return ''.join(phonetic_tokens)
 
+# PSE 변환 규칙
+conversion_table = {
+    "au̇": "ɑu",
+    "ȯi자음": "oi:",
+    "ȯi": "oi",
+    "ī자음": "ɑi:",
+    "ī": "ɑi",
+    "ā자음": "ei:",
+    "ā": "ei",
+    "ȯr": "or",
+    "är": "ɔ:r",
+    "u̇r": "u:r",
+    "ȯ": "ɔ:",
+    "ü": "u:",
+    "ē": "i:",
+    "u̇": "u",
+    "i": "i",
+    "e": "e",
+    "ə": "ʌ",
+    "ä": "ɑ:",
+    "a": "æ",
+    "ō": "ou",
+    "ər": "ər",
+    "er": "er",
+    "ir": "i:r",
+    "j": "ʤ",
+    "sh": "ʃ"
+}
+
+# 자음 정의
+consonant_pattern = r"[bcdfghjklmnpqrstvwxyz]"
+
+# PSE 규칙 변환
+def convert_to_pse(ipa: str) -> str:
+    for pattern, pse in conversion_table.items():
+        if pattern.endswith("자음"):
+            base_pattern = pattern[:-2]
+            if re.match(f"^{base_pattern}({consonant_pattern})", ipa):
+                return pse
+        elif ipa.startswith(pattern):
+            return pse
+    return ipa
+
 # API Key 유효성 검증
 def validate_api_key(api_key):
     test_word = "test"
@@ -108,17 +151,19 @@ if st.button("발음기호 알아보기"):
         with st.spinner("발음기호를 가져오는 중입니다..."):
             results = []
             missing_words = []
-            processing_status = st.empty()  # 상태 메시지
+            processing_status = st.empty()
             for idx, word in enumerate(word_list, start=1):
                 processing_status.info(f"{idx}/{len(word_list)}: '{word}' 처리 중...")
                 transcription = process_word(word, API_KEY)
-                results.append((word, transcription))
+                pse_transcription = convert_to_pse(transcription) # PSE 발음기호
+                results.append((word, transcription, pse_transcription))
                 if "[N/A]" in transcription:
                     missing_words.append(word)
-                
-            df = pd.DataFrame(results, columns=["Word", "Phonetic (with Stress)"])
+
+            df = pd.DataFrame(results, columns=["Word", "Phonetic (with Stress)", "PSE"])
             df.index += 1
             st.session_state["results_df"] = df
+            st.table(df)
             if missing_words:
                 st.warning(f"발음기호를 찾지 못한 단어: {', '.join(missing_words)}")
 
