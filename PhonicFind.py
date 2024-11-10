@@ -69,11 +69,10 @@ def get_phonetic(word, api_key, retries=3):
 # 추가 캐싱을 위한 딕셔너리
 na_cache = set()  # 이미 N/A로 확인된 단어를 저장
 
-# 각 단어의 발음기호 가져오기
+# 각 단어의 발음기호 가져오기 - 최적화된 함수
 def process_word(word, api_key): 
     tokens = re.split(r'([ \-/,;.!?:])', word)
     phonetic_tokens = []
-    delay = 0.1  # 기본 지연 시간
     for token in tokens:
         if re.match(r'[ \-/,;.!?:]', token):
             phonetic_tokens.append(token)
@@ -83,30 +82,27 @@ def process_word(word, api_key):
                 phonetic_tokens.append("[N/A]")
                 continue
             
-            # 첫 번째 API 호출
+            # 첫 번째 API 호출 시도
             transcription = get_phonetic(token, api_key)
             
-            # N/A 처리 - 캐시에 저장하여 불필요한 재시도 방지
+            # 첫 호출이 N/A일 경우, 단수형 변환을 한 번만 시도하고 추가 재시도는 하지 않음
             if transcription == "N/A":
                 singular_form = get_singular(token)
                 if singular_form != token:
                     transcription = get_phonetic(singular_form, api_key)
-                    # 변환 후 결과가 있으면 변환된 형태를 표시
                     if transcription != "N/A":
                         transcription += f" [{singular_form}]"
                 
-                # 여전히 N/A인 경우 캐시에 추가
+                # 여전히 N/A라면 캐시에 추가
                 if transcription == "N/A":
                     na_cache.add(token)
             
+            # 최종 transcription 결과 저장
             phonetic_tokens.append(transcription)
             
-            # N/A인 경우에도 불필요한 지연을 줄이기 위해 지연 시간 최소화
-            if transcription == "N/A":
-                delay = min(delay, 0.1)
-            else:
-                time.sleep(delay)
-                delay = min(delay + 0.05, 0.5)  # 지연 시간 증가
+            # N/A인 경우에는 지연 시간 생략
+            if transcription != "N/A":
+                time.sleep(0.1)  # 유효한 응답인 경우에만 지연
     return ''.join(phonetic_tokens)
 
 # PSE 변환 규칙
