@@ -50,17 +50,21 @@ def get_singular(word):
 
 # 발음기호 가져오기
 @lru_cache(maxsize=5000)
-def get_phonetic(word, api_key):
-    try:
-        response = requests.get(API_URL.format(word, api_key), timeout=10)
-        response.raise_for_status()
-        data = response.json()
-        if isinstance(data, list) and data and 'hwi' in data[0] and 'prs' in data[0]['hwi']:
-            return data[0]['hwi']['prs'][0].get('mw', "N/A")
-        return "N/A"
-    except requests.exceptions.RequestException as e:
-        st.error(f"API 오류 발생 ({word}): {e}")
-    return "N/A"
+def get_phonetic(word, api_key, retries=3):
+    for attempt in range(retries):
+        try:
+            response = requests.get(API_URL.format(word, api_key), timeout=10)
+            response.raise_for_status()
+            data = response.json()
+            if isinstance(data, list) and data and 'hwi' in data[0] and 'prs' in data[0]['hwi']:
+                return data[0]['hwi']['prs'][0].get('mw', "N/A")
+            return "N/A"
+        except requests.exceptions.RequestException as e:
+            if attempt < retries - 1:  # 재시도 가능
+                time.sleep(2 ** attempt)  # 지수적 지연
+                continue
+            st.error(f"API 오류 발생 ({word}): {e}")
+            return "N/A"
 
 # 각 단어의 발음기호 가져오기
 def process_word(word, api_key): 
@@ -117,14 +121,15 @@ consonant_pattern = r"[bcdfghjklmnpqrstvwxyz]"
 
 # PSE 규칙 변환
 def convert_to_pse(ipa: str) -> str:
+    result = ipa
     for pattern, pse in conversion_table.items():
-        if pattern.endswith("자음"):
-            base_pattern = pattern[:-2]
-            if re.match(f"^{base_pattern}({consonant_pattern})", ipa):
-                return pse
-        elif ipa.startswith(pattern):
-            return pse
-    return ipa
+        if "자음" in pattern:  # 자음 여부를 판단
+            base_pattern = pattern.replace("자음", "")
+            if re.match(f"{base_pattern}({consonant_pattern})", ipa):
+                result = re.sub(base_pattern, pse, result)
+        else:
+            result = result.replace(pattern, pse)
+    return result
 
 # API Key 유효성 검증
 def validate_api_key(api_key):
@@ -179,7 +184,7 @@ if not st.session_state["results_df"].empty:
             return 'background-color: yellow;'
         return ''
         
-    styled_df = df.style.applymap(highlight_cells, subset=['Phonetic (with Stress)'])
+    styled_df = df.style.applymap(highlight_cells, subset=['Phonetic (with Stress)', 'PSE'])
     st.table(styled_df)
 
     # CSV 다운로드 (UTF-8 with BOM)
