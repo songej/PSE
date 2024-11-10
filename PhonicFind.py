@@ -149,7 +149,7 @@ consonant_pattern = r"[bcdfghjklmnpqrstvwxyz]"
 
 # PSE 규칙 변환
 def convert_to_pse(ipa: str) -> str:
-    # 변환 규칙 적용
+    # PSE 변환 규칙 적용
     for pattern, pse in conversion_table.items():
         if pattern.endswith("자음"):
             base_pattern = pattern[:-2]
@@ -157,15 +157,14 @@ def convert_to_pse(ipa: str) -> str:
         else:
             ipa = ipa.replace(pattern, pse)
 
-    # 강세 적용
+    # 강세 기호 변환 적용
     ipa = re.sub(
         r"ˈ((?:ɑi|ei|oi|ou|ɑu|[iueɔʌəɑæ]+:?r?))",
         lambda m: vowel_mapping.get(m.group(1), m.group(1)),
-        ipa,
-        count=1
+        ipa
     )
-    ipa = ipa.replace("ˈ", "")
-    
+
+    ipa = ipa.replace("ˈ", "")  # 변환 후 ˈ제거    
     return ipa
 
 # API Key 유효성 검증
