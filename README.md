@@ -1,6 +1,6 @@
 # PSE
 
-PhonicFind.py 테스팅 단어
+- PhonicFind.py 테스트 단어
 apple
 straight hair
 intercom / speaker
