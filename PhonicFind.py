@@ -231,7 +231,7 @@ if not st.session_state["results_df"].empty:
     # CSV 다운로드 (UTF-8 with BOM)
     csv = df.to_csv(index=True, encoding='utf-8-sig').encode('utf-8-sig')
     st.download_button(
-        label="발음기호 다운로드",
+        label="발음기호 목록 다운로드",
         data=csv,
         file_name='PhonicFind.csv',
         mime='text/csv'
