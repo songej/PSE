@@ -92,7 +92,7 @@ def process_word(word):
     return ''.join(phonetic_tokens)
 
 # 발음기호 가져오기 실행
-if st.button("Get Phonetic Transcriptions"):
+if st.button("발음기호 알아보기"):
     if not API_KEY:
         st.error("API Key를 입력하세요.")
     elif word_list:
