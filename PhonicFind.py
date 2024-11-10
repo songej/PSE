@@ -120,7 +120,7 @@ if st.button("발음기호 알아보기"):
                 st.warning(f"발음기호를 찾지 못한 단어들: {', '.join(missing_words)}")
 
             # CSV 다운로드 (UTF-8 with BOM)
-            csv = df.to_csv(index=False, encoding='utf-8-sig').encode('utf-8-sig')
+            csv = df.to_csv(index=True, encoding='utf-8-sig').encode('utf-8-sig')
             st.download_button(
                 label="결과표 다운로드",
                 data=csv,
