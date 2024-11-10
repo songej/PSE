@@ -49,7 +49,7 @@ def get_singular(word):
     return word
 
 # 발음기호 가져오기
-@lru_cache(maxsize=5000)  # 캐시 크기 조정
+@lru_cache(maxsize=5000)
 def get_phonetic(word, api_key):
     try:
         response = requests.get(API_URL.format(word, api_key), timeout=10)
@@ -80,7 +80,7 @@ def process_word(word, api_key):
                         transcription += f" [{singular_form}]"
             phonetic_tokens.append(transcription if transcription != "N/A" else "[N/A]")
             time.sleep(delay)
-            delay = min(delay + 0.05, 0.5)  # 요청 빈도 제한을 점진적으로 높임
+            delay = min(delay + 0.05, 0.5)
     return ''.join(phonetic_tokens)
 
 # API Key 유효성 검증
@@ -108,8 +108,9 @@ if st.button("발음기호 알아보기"):
         with st.spinner("발음기호를 가져오는 중입니다..."):
             results = []
             missing_words = []
+            processing_status = st.empty()  # 메시지 위치 고정
             for idx, word in enumerate(word_list, start=1):
-                st.info(f"{idx}/{len(word_list)}: '{word}' 처리 중...")
+                processing_status.info(f"{idx}/{len(word_list)}: '{word}' 처리 중...")
                 transcription = process_word(word, API_KEY)
                 results.append((word, transcription))
                 if "[N/A]" in transcription:
@@ -126,9 +127,14 @@ if not st.session_state["results_df"].empty:
     df = st.session_state["results_df"]
 
     # 결과표 스타일링
-    def highlight_na(value):
-        return 'background-color: yellow' if '[N/A]' in value else ''
-    styled_df = df.style.applymap(highlight_na, subset=['Phonetic (with Stress)'])
+    def highlight_cells(value):
+        if '[N/A]' in value:
+            return 'background-color: red; color: white;'
+        elif '[' in value and ']' in value:
+            return 'background-color: yellow;'
+        return ''
+        
+    styled_df = df.style.applymap(highlight_cells, subset=['Phonetic (with Stress)'])
     st.table(styled_df)
 
     # CSV 다운로드 (UTF-8 with BOM)
