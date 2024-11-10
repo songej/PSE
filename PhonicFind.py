@@ -1,131 +1,116 @@
 import streamlit as st
-import requests
-import re
+import openai
 import pandas as pd
-import time
-import io
+import io  # io 모듈 추가
 
-st.set_page_config(page_title="PhonicFind", page_icon="🔠")
+st.set_page_config(page_title="PSE Ladder", page_icon="🪜")
 
-st.markdown(
-    """
-    <style>
-    @media (max-width: 768px) {
-        .block-container {
-            padding-top: 1rem;
-        }
-        .stButton button {
-            font-size: 16px;
-            padding: 8px;
-        }
-        .stMarkdown p {
-            font-size: 16px;
-        }
-    }
-    </style>
-    """, unsafe_allow_html=True
-)
+# LLM API 설정
+try:
+    openai.api_key = st.secrets["API_key"]
+except KeyError:
+    st.error("API key를 설정하지 않았습니다. Streamlit Secrets에 API 키를 추가해주세요.")
 
-st.title("PhonicFind: PSE 발음찾기")
-
-st.markdown("""
-메리엄-웹스터 사전에서 무료로 제공하는 API 키를 입력하고,  
-하루에 1000 단어까지 한꺼번에 발음기호를 찾아보세요.
-1. Merriam-Webster's Developer Center [회원가입](https://dictionaryapi.com/register/index)
-   - Request API Key (1) 에는 Collegiate Dictionary 선택
-   - Request API Key (2) 에는 Learners Dictionary 선택
-2. 이메일 인증하고 [로그인](https://dictionaryapi.com/sign-in)
-3. [Your Keys 페이지](https://dictionaryapi.com/account/my-keys) 에서 Key (Dictionary): 부분의 코드를 복사해서 붙여넣기
-""")
-
-API_KEY = st.text_input("API Key 입력:", type="password")
-
-st.write("발음기호를 가져올 단어 목록을 입력하세요. (한 줄에 하나씩)")
-word_list = st.text_area("단어 입력:", height=200).splitlines()
-
-API_URL = "https://www.dictionaryapi.com/api/v3/references/collegiate/json/{}?key={}"
-
-# 복수형을 단수형으로 변환
-def get_singular(word):
-    if word.endswith('ies') and len(word) > 3:
-        return word[:-3] + 'y'
-    elif word.endswith('es') and len(word) > 2:
-        return word[:-2]
-    elif word.endswith('s') and len(word) > 1:
-        return word[:-1]
-    return word
-
-# API에서 발음기호 가져오기
-def get_phonetic(word):
+# 문장 번역 및 변환
+def process_sentence(sentence):
+    eng_sentence = ""
+    kor_sentence = ""
+    
     try:
-        response = requests.get(API_URL.format(word, API_KEY), timeout=180)
-        response.raise_for_status()
-        data = response.json()
-        
-        if data and isinstance(data, list) and 'hwi' in data[0] and 'prs' in data[0]['hwi']:
-            return data[0]['hwi']['prs'][0].get('mw', "N/A")
+        # 언어 감지 및 번역 프롬프트 설정
+        if any(ord(char) > 127 for char in sentence):  # 한국어가 포함된 경우
+            eng_prompt = f"Translate this Korean sentence to English: '{sentence}'"
+            kor_sentence = sentence
         else:
-            return "N/A"  # 데이터가 있지만 발음기호가 없을 때
-    except requests.exceptions.RequestException as e:
-        st.error(f"API 오류 발생 ({word}): {e}")
-    except ValueError:
-        st.error(f"API 응답 오류 ({word}): API 키를 확인하세요.")
-    return "N/A"
+            eng_prompt = f"Translate this English sentence to Korean: '{sentence}'"
+            eng_sentence = sentence
 
-# 단어 처리 후 발음기호 가져오기
-def process_word(word): 
-    tokens = re.split(r'([ \-/,;.!?:])', word)  # 다양한 구분자 고려
-    phonetic_tokens = []
-    for token in tokens:
-        if re.match(r'[ \-/,;.!?:]', token):  # 발음기호에 구분자 추가
-            phonetic_tokens.append(token)
-        elif token.strip():  # 공백이 아닌 실제 단어만 처리
-            transcription = get_phonetic(token)
-            if transcription == "N/A":  # 발음기호가 없는 경우 단수형 변환 후 다시 시도
-                singular_form = get_singular(token)
-                if singular_form != token:
-                    transcription = get_phonetic(singular_form)
-                    if transcription != "N/A":
-                        transcription += f" [{singular_form}]"  # 단수형 단어를 [ ]로 표시
-            phonetic_tokens.append(transcription if transcription != "N/A" else "[N/A]")
-            time.sleep(0.1)  # API 요청 사이 지연
-    return ''.join(phonetic_tokens)
-
-# 발음기호 가져오기 실행
-if st.button("발음기호 알아보기"):
-    if not API_KEY:
-        st.error("API Key를 입력하세요.")
-    elif word_list:
-        with st.spinner("발음기호를 가져오는 중입니다..."):
-            results = []  # 결과를 저장할 리스트로 수정
-            missing_words = []
-            for word in word_list:
-                if word.strip():
-                    transcription = process_word(word)
-                    results.append((word, transcription))  # 리스트에 단어와 발음기호 추가
-                    if "[N/A]" in transcription:
-                        missing_words.append(word)
-            # 결과 출력
-            df = pd.DataFrame(results, columns=["Word", "Phonetic (with Stress)"])  # 리스트를 데이터프레임으로 변환
-            df.index += 1
-            def highlight_na(value):
-                if '[N/A]' in value:
-                    return 'background-color: yellow'
-                return ''
-            styled_df = df.style.applymap(highlight_na, subset=['Phonetic (with Stress)'])
-            st.table(styled_df)
-
-            # 누락된 단어 표시
-            if missing_words:
-                st.warning(f"발음기호를 찾지 못한 단어들: {', '.join(missing_words)}")
-
-            # CSV 다운로드 (UTF-8 with BOM)
-            csv = df.to_csv(index=False, encoding='utf-8-sig').encode('utf-8-sig')
-            st.download_button(
-                label="Download as CSV",
-                data=csv,
-                file_name='phonetic_transcriptions.csv',
-                mime='text/csv'
+        # 번역 요청
+        with st.spinner("문장을 번역하는 중입니다..."):
+            translation_response = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo",
+                messages=[{"role": "user", "content": eng_prompt}],
+                max_tokens=100,
+                temperature=0.7
             )
+        
+        translated_sentence = translation_response.choices[0].message['content'].strip()
+        
+        # 영문과 국문 문장 설정
+        if kor_sentence:
+            eng_sentence = translated_sentence
+        else:
+            kor_sentence = translated_sentence
+
+        # 사다리 문장 생성
+        forms_prompt = (
+            f"Generate 4 forms for this English sentence: '{eng_sentence}'\n"
+            f"1. Declarative\n2. Interrogative\n3. Negative\n4. Negative Interrogative"
+        )
+        
+        with st.spinner("사다리 문장을 생성하는 중입니다..."):
+            forms_response = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo",
+                messages=[{"role": "user", "content": forms_prompt}],
+                max_tokens=1000,
+                temperature=0.7
+            )
+        
+        # 형식 목록 생성 (번호 제거)
+        forms = [form.split(": ", 1)[-1].strip() for form in forms_response.choices[0].message['content'].strip().split("\n") if form]
+
+        # 번호 패턴 제거
+        cleaned_forms = []
+        for form in forms:
+            # 숫자와 마침표가 있는 경우 제거
+            cleaned_forms.append(form.split(". ", 1)[-1].strip() if form[0].isdigit() and form[1] == "." else form)
+
+        return eng_sentence, kor_sentence, cleaned_forms
+    
+    except Exception as e:
+        st.error("번역 중 오류가 발생했습니다. 다시 시도해 주세요.")
+        return "", "", ["", "", "", ""]
+
+# Streamlit UI
+st.title("PSE 사다리 만들기")
+st.write("문장을 번역하고, 사다리 연습 문장들을 제공합니다.")
+
+# 사용자 문장 입력
+sentences = st.text_area("한 줄에 한 문장씩 입력하세요. (국문 또는 영문, 한 번에 최대 10문장)", height=200).splitlines()
+sentences = [sentence.strip() for sentence in sentences if sentence.strip()][:10]
+
+# 사다리 생성
+if st.button("사다리 만들기"):
+    if not sentences:  # 문장이 입력되지 않았을 때 경고 메시지
+        st.warning("최소 한 문장을 입력하세요.")
     else:
-        st.warning("단어를 최소 하나 입력하세요.")
+        results = []
+        for sentence in sentences:
+            eng_sentence, kor_sentence, forms = process_sentence(sentence)
+            results.append({
+                "영문": eng_sentence,
+                "국문": kor_sentence,
+                "평서문": forms[0] if len(forms) > 0 else "",
+                "의문문": forms[1] if len(forms) > 1 else "",
+                "부정문": forms[2] if len(forms) > 2 else "",
+                "부정의문문": forms[3] if len(forms) > 3 else ""
+            })
+
+        # 결과표 출력
+        df = pd.DataFrame(results)
+        df.index = range(1, len(df) + 1)  # 행번호 1부터 시작
+
+        st.write("### 사다리 연습 문장")
+        st.table(df)
+
+        # CSV 다운로드 (UTF-8 with BOM)
+        csv = df.to_csv(index=True, encoding="utf-8-sig")
+        b = io.BytesIO()
+        b.write(csv.encode())
+        b.seek(0)
+        st.download_button(
+            label="결과표 다운로드",
+            data=b,
+            file_name="translation_results.csv",
+            mime="text/csv"
+        )
