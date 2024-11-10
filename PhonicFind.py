@@ -153,7 +153,7 @@ def convert_to_pse(ipa: str) -> str:
     for pattern, pse in conversion_table.items():
         if pattern.endswith("자음"):
             base_pattern = pattern[:-2]
-            ipa = re.sub(f"{base_pattern}(?=[{consonant_pattern}])", pse, ipa)
+            ipa = re.sub(f"{base_pattern}(?={consonant_pattern})", pse, ipa)
         else:
             ipa = ipa.replace(pattern, pse)
 
@@ -179,7 +179,7 @@ def validate_api_key(api_key):
     except requests.exceptions.RequestException:
         return False
 
-# 세션 상태를 사용하여 결과 저장
+# 세션 상태로 결과 저장
 if "results_df" not in st.session_state:
     st.session_state["results_df"] = pd.DataFrame()
 
@@ -202,7 +202,7 @@ if st.button("발음기호 알아보기"):
                 if "[N/A]" in transcription:
                     missing_words.append(word)
 
-            # 결과를 세션 상태에 저장
+            # 결과 세션 저장
             df = pd.DataFrame(results, columns=["Word", "Phonetic (with Stress)", "PSE"])
             df.index += 1
             st.session_state["results_df"] = df
@@ -223,7 +223,7 @@ if not st.session_state["results_df"].empty:
 
     # 결과표 출력
     styled_df = df.style.applymap(highlight_cells, subset=['Phonetic (with Stress)', 'PSE'])
-    st.write(styled_df)
+    st.dataframe(styled_df, use_container_width=True)
 
     # CSV 다운로드 (UTF-8 with BOM)
     csv = df.to_csv(index=True, encoding='utf-8-sig').encode('utf-8-sig')
