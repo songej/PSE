@@ -66,6 +66,9 @@ def get_phonetic(word, api_key, retries=3):
             st.error(f"API 오류 발생 ({word}): {e}")
             return "N/A"
 
+# 추가 캐싱을 위한 딕셔너리
+na_cache = set()  # 이미 N/A로 확인된 단어를 저장
+
 # 각 단어의 발음기호 가져오기
 def process_word(word, api_key): 
     tokens = re.split(r'([ \-/,;.!?:])', word)
@@ -75,10 +78,15 @@ def process_word(word, api_key):
         if re.match(r'[ \-/,;.!?:]', token):
             phonetic_tokens.append(token)
         elif token.strip():
+            # 이미 N/A로 확인된 경우 캐시에서 즉시 반환
+            if token in na_cache:
+                phonetic_tokens.append("[N/A]")
+                continue
+            
             # 첫 번째 API 호출
             transcription = get_phonetic(token, api_key)
             
-            # 결과가 N/A가 아닌 경우에만 복수형 변환 시도
+            # N/A 처리 - 캐시에 저장하여 불필요한 재시도 방지
             if transcription == "N/A":
                 singular_form = get_singular(token)
                 if singular_form != token:
@@ -86,9 +94,14 @@ def process_word(word, api_key):
                     # 변환 후 결과가 있으면 변환된 형태를 표시
                     if transcription != "N/A":
                         transcription += f" [{singular_form}]"
+                
+                # 여전히 N/A인 경우 캐시에 추가
+                if transcription == "N/A":
+                    na_cache.add(token)
+            
             phonetic_tokens.append(transcription)
             
-            # N/A인 경우에도 불필요한 지연을 줄이기 위해 지연 시간 감소
+            # N/A인 경우에도 불필요한 지연을 줄이기 위해 지연 시간 최소화
             if transcription == "N/A":
                 delay = min(delay, 0.1)
             else:
