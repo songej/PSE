@@ -85,7 +85,7 @@ def process_word(word, api_key):
             # 첫 번째 API 호출 시도
             transcription = get_phonetic(token, api_key)
             
-            # 첫 호출이 N/A일 경우, 단수형 변환을 한 번만 시도하고 추가 재시도는 하지 않음
+            # 첫 호출이 N/A일 경우, 단수형 변환을 한 번만 시도
             if transcription == "N/A":
                 singular_form = get_singular(token)
                 if singular_form != token:
@@ -99,10 +99,6 @@ def process_word(word, api_key):
             
             # 최종 transcription 결과 저장
             phonetic_tokens.append(transcription)
-            
-            # N/A인 경우에는 지연 시간 생략
-            if transcription != "N/A":
-                time.sleep(0.1)  # 유효한 응답인 경우에만 지연
     return ''.join(phonetic_tokens)
 
 # PSE 변환 규칙
@@ -175,15 +171,12 @@ def convert_to_pse(ipa: str) -> str:
         else:
             ipa = ipa.replace(pattern, pse)
 
-    # 2. 강세 기호 변환을 모든 `ˈ` 뒤의 첫 모음에 반복 적용
-    # `ˈ` 뒤의 다양한 모음 패턴을 모두 처리하고 한 번에 한 강세 기호를 변환
-    while "ˈ" in ipa:
-        ipa = re.sub(
-            r"ˈ((?:ɑi|ei|oi|ou|ɑu|[iueɔʌəɑæ]+:?r?))",  # 단일 모음, 이중 모음 및 모음+r 패턴
-            lambda m: vowel_mapping.get(m.group(1), m.group(1)),
-            ipa,
-            count=1  # 한 번에 한 강세 변환
-        )
+    # 2. 강세 기호 변환: 모든 `ˈ` 뒤의 첫 모음 패턴에 강세 기호를 한 번에 적용
+    ipa = re.sub(
+        r"ˈ((?:ɑi|ei|oi|ou|ɑu|[iueɔʌəɑæ]+:?r?))",  # 모든 모음 패턴에 대응
+        lambda m: vowel_mapping.get(m.group(1), m.group(1)),
+        ipa
+    )
 
     # 3. 변환 후 모든 `ˈ` 기호 제거
     ipa = ipa.replace("ˈ", "")
