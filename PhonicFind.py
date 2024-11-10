@@ -108,7 +108,7 @@ if st.button("발음기호 알아보기"):
         with st.spinner("발음기호를 가져오는 중입니다..."):
             results = []
             missing_words = []
-            processing_status = st.empty()  # 메시지 위치 고정
+            processing_status = st.empty()  # 상태 메시지
             for idx, word in enumerate(word_list, start=1):
                 processing_status.info(f"{idx}/{len(word_list)}: '{word}' 처리 중...")
                 transcription = process_word(word, API_KEY)
@@ -142,6 +142,6 @@ if not st.session_state["results_df"].empty:
     st.download_button(
         label="결과표 다운로드",
         data=csv,
-        file_name='phonetic_transcriptions.csv',
+        file_name='PhonicFind.csv',
         mime='text/csv'
     )
