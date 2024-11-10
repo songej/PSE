@@ -240,6 +240,7 @@ if not st.session_state["results_df"].empty:
     # 결과표 출력
     styled_df = df.style.applymap(highlight_cells, subset=['Phonetic (with Stress)', 'PSE'])
     st.dataframe(styled_df, use_container_width=True)
+    st.write("PSE 발음기호 변환은 보완 중입니다.")
 
     # CSV 다운로드 (UTF-8 with BOM)
     csv = df.to_csv(index=True, encoding='utf-8-sig').encode('utf-8-sig')
