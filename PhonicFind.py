@@ -160,19 +160,19 @@ if st.button("발음기호 알아보기"):
             for idx, word in enumerate(word_list, start=1):
                 processing_status.info(f"{idx}/{len(word_list)}: '{word}' 처리 중...")
                 transcription = process_word(word, API_KEY)
-                pse_transcription = convert_to_pse(transcription) # PSE 발음기호
+                pse_transcription = convert_to_pse(transcription)  # PSE 발음기호
                 results.append((word, transcription, pse_transcription))
                 if "[N/A]" in transcription:
                     missing_words.append(word)
 
+            # 결과를 세션 상태에 저장
             df = pd.DataFrame(results, columns=["Word", "Phonetic (with Stress)", "PSE"])
             df.index += 1
             st.session_state["results_df"] = df
-            st.table(df)
             if missing_words:
                 st.warning(f"발음기호를 찾지 못한 단어: {', '.join(missing_words)}")
 
-# 결과표 세션 유지
+# 결과 출력
 if not st.session_state["results_df"].empty:
     df = st.session_state["results_df"]
 
@@ -183,14 +183,15 @@ if not st.session_state["results_df"].empty:
         elif '[' in value and ']' in value:
             return 'background-color: yellow;'
         return ''
-        
+
+    # 결과표 출력
     styled_df = df.style.applymap(highlight_cells, subset=['Phonetic (with Stress)', 'PSE'])
-    st.table(styled_df)
+    st.write(styled_df)
 
     # CSV 다운로드 (UTF-8 with BOM)
     csv = df.to_csv(index=True, encoding='utf-8-sig').encode('utf-8-sig')
     st.download_button(
-        label="결과표 다운로드",
+        label="발음기호 다운로드",
         data=csv,
         file_name='PhonicFind.csv',
         mime='text/csv'
