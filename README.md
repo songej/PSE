@@ -1,5 +1,3 @@
-Hack the PSE
-
 # PSE PowerTools
 PSE에서의 공부를 돕는 도구들
 
