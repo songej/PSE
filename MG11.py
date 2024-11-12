@@ -25,7 +25,6 @@ st.markdown(
 st.title('PSE StudyMate')
 
 all_members = ['Ruby', 'Sujin', 'Rae', 'Angela', 'Jayden']
-
 present_members = st.multiselect("Select Members", all_members, default=all_members)
 
 def assign_roles(members):
@@ -33,19 +32,27 @@ def assign_roles(members):
     if num_members < 2:
         return None, [], "Not enough members to form a team!"
     
-    random.shuffle(members)
-    quizmaster = members[0]
-    teams = [members[i:i+2] for i in range(0, num_members, 2)]
+    random.shuffle(members)  # 무작위 섞기
+    quizmaster = members[0]  # 단어 퀴즈 역할 지정
+    teams = [members[i:i+2] for i in range(0, num_members, 2)]  # 소그룹 지정
     
-    if len(teams) > 1 and len(teams[-1]) == 1:
+    # 홀수 팀 구성 시 마지막 팀 조정
+    if len(teams[-1]) == 1 and len(teams) > 1:
         if len(teams[-2]) < 3:
             teams[-2].append(teams.pop()[0])
+    
+    # 팀 구성 완료 확인
+    if any(len(team) > 3 for team in teams):
+        return None, [], "Team assignment error! Please try again."
+    
     return quizmaster, teams, None
 
+# 팀 구성 버튼
 if st.button('Mix It Up!'):
     if not present_members:
         st.error("No members selected! Please choose at least two members.")
     else:
+        random.seed(None)  # 매번 새로운 랜덤 시드 설정
         with st.spinner("Mixing teams and choosing the Vocabulary Quizmaster..."):
             quizmaster, teams, error = assign_roles(present_members)
         if error:
@@ -54,4 +61,3 @@ if st.button('Mix It Up!'):
             st.success(f"Vocabulary Quizmaster: {quizmaster}")
             for i, team in enumerate(teams, start=1):
                 st.write(f"sub-group #{i}: [ {', '.join(team)} ]")
-
