@@ -1,12 +1,18 @@
-# PSE
-PSE StudyMate
+Hack the PSE
+
+# PSE PowerTools
+PSE에서의 공부를 돕는 도구을
+
+PSE 그룹 스터디 도우미
 https://psestudy.streamlit.app/
+
+PSE 사다리 생성기
+https://pseladder.streamlit.app/
 
 PSE 발음기호 찾기
 https://psephonic.streamlit.app/
 
-PSE 사다리 만들기
-https://pseladder.streamlit.app/
+Power Up Your PSE Learning!
 
 다음사전
 https://dic.daum.net/search.do?q=hello
