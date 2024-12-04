@@ -1,5 +1,5 @@
 # PSE PowerTools
-PSE에서의 공부를 돕는 도구들
+PSE 공부를 돕는 도구들
 
 PSE 그룹 스터디 도우미
 https://psestudy.streamlit.app/
